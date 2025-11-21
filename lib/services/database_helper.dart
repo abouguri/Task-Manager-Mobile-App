@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/task.dart';
@@ -11,6 +12,10 @@ class DatabaseHelper {
 
   // Database instance
   static Database? _database;
+  
+  // In-memory storage for web platform
+  static final List<Task> _webStorage = [];
+  static int _webNextId = 1;
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
@@ -19,6 +24,9 @@ class DatabaseHelper {
 
   /// Get database instance (create if doesn't exist)
   Future<Database> get database async {
+    if (kIsWeb) {
+      throw UnsupportedError('SQLite not supported on web');
+    }
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
@@ -66,6 +74,13 @@ class DatabaseHelper {
   /// Insert a new task into the database
   Future<int> insertTask(Task task) async {
     try {
+      if (kIsWeb) {
+        // Web platform: use in-memory storage
+        final newTask = task.copyWith(id: _webNextId++);
+        _webStorage.add(newTask);
+        return newTask.id!;
+      }
+      
       final db = await database;
       return await db.insert(
         _tableName,
@@ -80,6 +95,16 @@ class DatabaseHelper {
   /// Update an existing task in the database
   Future<int> updateTask(Task task) async {
     try {
+      if (kIsWeb) {
+        // Web platform: update in-memory storage
+        final index = _webStorage.indexWhere((t) => t.id == task.id);
+        if (index != -1) {
+          _webStorage[index] = task;
+          return 1;
+        }
+        return 0;
+      }
+      
       final db = await database;
       return await db.update(
         _tableName,
@@ -95,6 +120,13 @@ class DatabaseHelper {
   /// Delete a task from the database
   Future<int> deleteTask(int id) async {
     try {
+      if (kIsWeb) {
+        // Web platform: remove from in-memory storage
+        final initialLength = _webStorage.length;
+        _webStorage.removeWhere((task) => task.id == id);
+        return initialLength - _webStorage.length;
+      }
+      
       final db = await database;
       return await db.delete(
         _tableName,
@@ -109,6 +141,23 @@ class DatabaseHelper {
   /// Get all tasks from the database
   Future<List<Task>> getAllTasks() async {
     try {
+      if (kIsWeb) {
+        // Web platform: return sorted in-memory storage
+        final sortedTasks = List<Task>.from(_webStorage);
+        sortedTasks.sort((a, b) {
+          // Sort by due date, then by created date
+          if (a.dueDate != null && b.dueDate != null) {
+            return a.dueDate!.compareTo(b.dueDate!);
+          } else if (a.dueDate != null) {
+            return -1;
+          } else if (b.dueDate != null) {
+            return 1;
+          }
+          return b.createdAt.compareTo(a.createdAt);
+        });
+        return sortedTasks;
+      }
+      
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -126,6 +175,15 @@ class DatabaseHelper {
   /// Get a specific task by ID
   Future<Task?> getTaskById(int id) async {
     try {
+      if (kIsWeb) {
+        // Web platform: search in-memory storage
+        try {
+          return _webStorage.firstWhere((task) => task.id == id);
+        } catch (e) {
+          return null;
+        }
+      }
+      
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -144,6 +202,10 @@ class DatabaseHelper {
   /// Get tasks by completion status
   Future<List<Task>> getTasksByStatus(bool isCompleted) async {
     try {
+      if (kIsWeb) {
+        return _webStorage.where((task) => task.isCompleted == isCompleted).toList();
+      }
+      
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -163,6 +225,10 @@ class DatabaseHelper {
   /// Get tasks by priority
   Future<List<Task>> getTasksByPriority(String priority) async {
     try {
+      if (kIsWeb) {
+        return _webStorage.where((task) => task.priority == priority).toList();
+      }
+      
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -182,6 +248,10 @@ class DatabaseHelper {
   /// Get tasks by category
   Future<List<Task>> getTasksByCategory(String category) async {
     try {
+      if (kIsWeb) {
+        return _webStorage.where((task) => task.category == category).toList();
+      }
+      
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -201,6 +271,13 @@ class DatabaseHelper {
   /// Search tasks by title or description
   Future<List<Task>> searchTasks(String query) async {
     try {
+      if (kIsWeb) {
+        return _webStorage.where((task) {
+          return task.title.toLowerCase().contains(query.toLowerCase()) ||
+              (task.description?.toLowerCase().contains(query.toLowerCase()) ?? false);
+        }).toList();
+      }
+      
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -220,6 +297,12 @@ class DatabaseHelper {
   /// Delete all tasks (for testing purposes)
   Future<void> deleteAllTasks() async {
     try {
+      if (kIsWeb) {
+        _webStorage.clear();
+        _webNextId = 1;
+        return;
+      }
+      
       final db = await database;
       await db.delete(_tableName);
     } catch (e) {
@@ -229,6 +312,11 @@ class DatabaseHelper {
 
   /// Close the database
   Future<void> close() async {
+    if (kIsWeb) {
+      // No need to close anything on web
+      return;
+    }
+    
     final db = await database;
     await db.close();
     _database = null;
