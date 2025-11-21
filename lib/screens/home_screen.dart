@@ -227,20 +227,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search tasks...',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white70),
+                  hintStyle: TextStyle(color: Colors.grey[400]),
                 ),
-                style: const TextStyle(color: Colors.white),
                 onChanged: (value) {
                   context.read<TaskProvider>().searchTasks(value);
                 },
               )
-            : const Text('Task Manager'),
+            : const Text('Tasks'),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: Icon(_isSearching ? Icons.close : Icons.search_rounded),
             onPressed: () {
               setState(() {
                 if (_isSearching) {
@@ -248,6 +247,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   context.read<TaskProvider>().searchTasks('');
                 }
                 _isSearching = !_isSearching;
+              });
+            },
+            tooltip: 'Search',
+          ),
+          IconButton(
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: _showFilterDialog,
+            tooltip: 'Filter',
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
               });
             },
           ),
@@ -270,26 +281,34 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.task_alt,
-                    size: 100,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No tasks yet!',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6C63FF).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 80,
+                      color: const Color(0xFF6C63FF).withOpacity(0.6),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to create your first task',
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No tasks yet',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[500],
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Tap the + button to create your first task',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ],
@@ -299,15 +318,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return RefreshIndicator(
             onRefresh: () => taskProvider.loadTasks(),
+            color: const Color(0xFF6C63FF),
             child: ListView.builder(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: taskProvider.tasks.length,
               itemBuilder: (context, index) {
                 final task = taskProvider.tasks[index];
                 return TaskCard(
                   task: task,
                   onTap: () {
-                    // Navigate to task detail screen (will be implemented)
                     Navigator.pushNamed(
                       context,
                       '/task-detail',
@@ -320,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
@@ -329,7 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add Task'),
       ),
     );
   }

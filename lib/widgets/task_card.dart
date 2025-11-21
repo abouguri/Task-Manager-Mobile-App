@@ -17,64 +17,89 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(20),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Checkbox for completion status
-              Checkbox(
-                value: task.isCompleted,
-                onChanged: (value) {
+              // Custom Checkbox with animation
+              GestureDetector(
+                onTap: () {
                   context.read<TaskProvider>().toggleTaskCompletion(task);
                 },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: task.isCompleted
+                        ? _getPriorityColor(task.priority)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: task.isCompleted
+                          ? _getPriorityColor(task.priority)
+                          : Colors.grey.withOpacity(0.3),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: task.isCompleted
+                      ? const Icon(
+                          Icons.check,
+                          size: 18,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 16),
 
               // Task content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and priority indicator
+                    // Title with priority dot
                     Row(
                       children: [
-                        // Priority indicator
+                        // Priority dot indicator
                         Container(
-                          width: 4,
-                          height: 20,
+                          width: 8,
+                          height: 8,
                           decoration: BoxDecoration(
                             color: _getPriorityColor(task.priority),
-                            borderRadius: BorderRadius.circular(2),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: _getPriorityColor(task.priority).withOpacity(0.4),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
 
                         // Title
                         Expanded(
                           child: Text(
                             task.title,
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
                               decoration: task.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: task.isCompleted
-                                  ? Colors.grey
-                                  : Colors.black87,
+                                  ? Colors.grey.withOpacity(0.6)
+                                  : isDark ? Colors.white : const Color(0xFF1A1A1A),
+                              letterSpacing: -0.3,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -82,63 +107,63 @@ class TaskCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
                     // Description (if available)
                     if (task.description != null && task.description!.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
                           task.description!,
                           style: TextStyle(
                             fontSize: 14,
                             color: task.isCompleted
-                                ? Colors.grey
-                                : Colors.black54,
+                                ? Colors.grey.withOpacity(0.5)
+                                : Colors.grey[600],
+                            height: 1.4,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
 
-                    // Category and Due Date
+                    // Category and Due Date - Minimalist badges
                     Wrap(
                       spacing: 8,
-                      runSpacing: 4,
+                      runSpacing: 8,
                       children: [
                         // Category badge
-                        _buildBadge(
+                        _buildMinimalBadge(
                           icon: _getCategoryIcon(task.category),
                           label: task.category,
                           color: _getCategoryColor(task.category),
+                          isDark: isDark,
                         ),
 
                         // Due date badge
                         if (task.dueDate != null)
-                          _buildBadge(
-                            icon: Icons.calendar_today,
+                          _buildMinimalBadge(
+                            icon: Icons.calendar_today_rounded,
                             label: _formatDueDate(task.dueDate!),
                             color: _getDueDateColor(task.dueDate!),
+                            isDark: isDark,
                           ),
-
-                        // Priority badge
-                        _buildBadge(
-                          icon: Icons.flag,
-                          label: task.priority,
-                          color: _getPriorityColor(task.priority),
-                        ),
                       ],
                     ),
                   ],
                 ),
               ),
 
-              // Delete button
+              // Delete button - Minimalist icon
               IconButton(
-                icon: const Icon(Icons.delete_outline),
-                color: Colors.red[400],
-                iconSize: 20,
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.grey.withOpacity(0.5),
+                ),
+                iconSize: 22,
                 onPressed: () => _showDeleteConfirmation(context),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ],
           ),
@@ -147,30 +172,31 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  /// Build a badge widget
-  Widget _buildBadge({
+  /// Build a minimal badge widget
+  Widget _buildMinimalBadge({
     required IconData icon,
     required String label,
     required Color color,
+    required bool isDark,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withOpacity(isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               color: color,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -228,13 +254,13 @@ class TaskCard extends StatelessWidget {
   Color _getPriorityColor(String priority) {
     switch (priority) {
       case 'High':
-        return Colors.red;
+        return const Color(0xFFFF6B6B); // Modern coral red
       case 'Medium':
-        return Colors.orange;
+        return const Color(0xFFFFA94D); // Warm orange
       case 'Low':
-        return Colors.green;
+        return const Color(0xFF51CF66); // Fresh green
       default:
-        return Colors.grey;
+        return const Color(0xFF94A3B8); // Soft grey
     }
   }
 
@@ -242,17 +268,17 @@ class TaskCard extends StatelessWidget {
   Color _getCategoryColor(String category) {
     switch (category) {
       case 'Work':
-        return Colors.blue;
+        return const Color(0xFF6C63FF); // Modern purple
       case 'Personal':
-        return Colors.purple;
+        return const Color(0xFFFF6584); // Pink accent
       case 'Shopping':
-        return Colors.teal;
+        return const Color(0xFF20C997); // Teal
       case 'Health':
-        return Colors.pink;
+        return const Color(0xFFFF8787); // Soft red
       case 'Other':
-        return Colors.grey;
+        return const Color(0xFF94A3B8); // Neutral grey
       default:
-        return Colors.grey;
+        return const Color(0xFF94A3B8);
     }
   }
 
@@ -260,17 +286,17 @@ class TaskCard extends StatelessWidget {
   IconData _getCategoryIcon(String category) {
     switch (category) {
       case 'Work':
-        return Icons.work;
+        return Icons.work_outline_rounded;
       case 'Personal':
-        return Icons.person;
+        return Icons.person_outline_rounded;
       case 'Shopping':
-        return Icons.shopping_cart;
+        return Icons.shopping_bag_outlined;
       case 'Health':
-        return Icons.favorite;
+        return Icons.favorite_border_rounded;
       case 'Other':
-        return Icons.category;
+        return Icons.label_outline_rounded;
       default:
-        return Icons.category;
+        return Icons.label_outline_rounded;
     }
   }
 
@@ -299,11 +325,11 @@ class TaskCard extends StatelessWidget {
     final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
 
     if (taskDate.isBefore(today)) {
-      return Colors.red; // Overdue
+      return const Color(0xFFFF6B6B); // Overdue - coral red
     } else if (taskDate == today) {
-      return Colors.orange; // Due today
+      return const Color(0xFFFFA94D); // Due today - warm orange
     } else {
-      return Colors.blue; // Future date
+      return const Color(0xFF748FFC); // Future date - soft blue
     }
   }
 }

@@ -20,51 +20,90 @@ class MyApp extends StatelessWidget {
         title: 'Task Manager',
         debugShowCheckedModeBanner: false,
         
-        // Material Design 3 theme
+        // Minimalist Fancy Theme - Light Mode
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
+            seedColor: const Color(0xFF6C63FF), // Modern purple/indigo
             brightness: Brightness.light,
+            primary: const Color(0xFF6C63FF),
+            secondary: const Color(0xFFFF6584),
+            surface: const Color(0xFFFAFAFA),
+            background: const Color(0xFFF5F5F7),
           ),
+          scaffoldBackgroundColor: const Color(0xFFF5F5F7),
           
-          // App Bar theme
+          // App Bar theme - Clean and minimal
           appBarTheme: const AppBarTheme(
             centerTitle: false,
             elevation: 0,
+            backgroundColor: Color(0xFFF5F5F7),
+            foregroundColor: Color(0xFF1A1A1A),
+            titleTextStyle: TextStyle(
+              color: Color(0xFF1A1A1A),
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
           ),
           
-          // Card theme
+          // Card theme - Sleek and modern
           cardTheme: CardTheme(
-            elevation: 2,
+            elevation: 0,
+            color: Colors.white,
+            shadowColor: Colors.black.withOpacity(0.05),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: Colors.grey.withOpacity(0.08),
+                width: 1,
+              ),
             ),
           ),
           
-          // Floating Action Button theme
-          floatingActionButtonTheme: FloatingActionButtonThemeData(
-            elevation: 4,
+          // Floating Action Button - Gradient effect
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            elevation: 0,
+            backgroundColor: Color(0xFF6C63FF),
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.all(Radius.circular(18)),
             ),
           ),
           
-          // Input Decoration theme
+          // Input Decoration - Minimal borders
           inputDecorationTheme: InputDecorationTheme(
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           ),
           
-          // Elevated Button theme
+          // Elevated Button - Modern and clean
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              elevation: 2,
+              elevation: 0,
+              backgroundColor: const Color(0xFF6C63FF),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -72,8 +111,14 @@ class MyApp extends StatelessWidget {
           // Text Button theme
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6C63FF),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -81,38 +126,101 @@ class MyApp extends StatelessWidget {
           // Outlined Button theme
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF6C63FF),
+              side: const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
           
           // Chip theme
           chipTheme: ChipThemeData(
+            backgroundColor: Colors.grey.withOpacity(0.1),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ),
+          
+          // Checkbox theme
+          checkboxTheme: CheckboxThemeData(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            fillColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF6C63FF);
+              }
+              return Colors.transparent;
+            }),
+            side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 2),
           ),
         ),
         
-        // Dark theme (optional)
+        // Dark theme - Elegant and sleek
         darkTheme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
+            seedColor: const Color(0xFF6C63FF),
             brightness: Brightness.dark,
+            primary: const Color(0xFF8B84FF),
+            secondary: const Color(0xFFFF8FA3),
+            surface: const Color(0xFF1E1E1E),
+            background: const Color(0xFF121212),
           ),
+          scaffoldBackgroundColor: const Color(0xFF121212),
           
           appBarTheme: const AppBarTheme(
             centerTitle: false,
             elevation: 0,
+            backgroundColor: Color(0xFF121212),
+            foregroundColor: Colors.white,
+            titleTextStyle: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
           ),
           
           cardTheme: CardTheme(
-            elevation: 2,
+            elevation: 0,
+            color: const Color(0xFF1E1E1E),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: Colors.white.withOpacity(0.08),
+                width: 1,
+              ),
             ),
+          ),
+          
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            elevation: 0,
+            backgroundColor: Color(0xFF8B84FF),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(18)),
+            ),
+          ),
+          
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFF8B84FF), width: 2),
+            ),
+            filled: true,
+            fillColor: const Color(0xFF1E1E1E),
           ),
         ),
         
