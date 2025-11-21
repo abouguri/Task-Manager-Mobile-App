@@ -1,0 +1,32 @@
+name: task_manager
+description: A complete Flutter mobile application for task management
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Local Database
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  
+  # Date Formatting
+  intl: ^0.18.1
+  
+  # UI
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
