@@ -43,5 +43,16 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android local files
+android/local.properties
+android/.gradle/
+android/gradle/
+
+# iOS local files
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
 # Project specific
 Description.txt
