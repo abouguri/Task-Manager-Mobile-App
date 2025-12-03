@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/task_card.dart';
 import 'add_edit_task_screen.dart';
+import '../main.dart';
 
 /// Home screen displaying the list of tasks with search and filter capabilities
 class HomeScreen extends StatefulWidget {
@@ -238,6 +239,21 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             : const Text('Tasks'),
         actions: [
+          // Theme toggle button
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              final isDark = themeProvider.themeMode == ThemeMode.dark;
+              return IconButton(
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                ),
+                onPressed: () {
+                  themeProvider.toggleTheme();
+                },
+                tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+              );
+            },
+          ),
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search_rounded),
             onPressed: () {
@@ -257,15 +273,6 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Filter',
           ),
           const SizedBox(width: 8),
-        ],
-      ),
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterDialog,
-          ),
         ],
       ),
       body: Consumer<TaskProvider>(

@@ -168,16 +168,16 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           children: [
             // Title field
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: 'Title *',
-                hintText: 'Enter task title',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title),
+                labelText: 'Title',
+                hintText: 'What needs to be done?',
+                prefixIcon: Icon(Icons.text_fields_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               textCapitalization: TextCapitalization.sentences,
               validator: (value) {
@@ -190,30 +190,30 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Description field
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Description',
-                hintText: 'Enter task description (optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.description),
+                hintText: 'Add more details... (optional)',
+                prefixIcon: Icon(Icons.notes_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
                 alignLabelWithHint: true,
               ),
               maxLines: 4,
               textCapitalization: TextCapitalization.sentences,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Priority dropdown
             DropdownButtonFormField<String>(
               value: _priority,
               decoration: const InputDecoration(
                 labelText: 'Priority',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.flag),
+                prefixIcon: Icon(Icons.flag_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               items: ['Low', 'Medium', 'High'].map((priority) {
                 return DropdownMenuItem(
@@ -240,15 +240,15 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 });
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Category dropdown
             DropdownButtonFormField<String>(
               value: _category,
               decoration: const InputDecoration(
                 labelText: 'Category',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
+                prefixIcon: Icon(Icons.label_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               items: ['Work', 'Personal', 'Shopping', 'Health', 'Other']
                   .map((category) {
@@ -263,29 +263,31 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 });
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Due date picker
             InkWell(
               onTap: _selectDate,
+              borderRadius: BorderRadius.circular(16),
               child: InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Due Date',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.calendar_today),
-                  suffixIcon: Icon(Icons.arrow_drop_down),
+                  hintText: 'Select a due date (optional)',
+                  prefixIcon: Icon(Icons.calendar_today_rounded),
+                  floatingLabelBehavior: FloatingLabelBehavior.auto,
                 ),
                 child: Text(
                   _dueDate != null
-                      ? DateFormat('MMM dd, yyyy').format(_dueDate!)
-                      : 'No due date',
+                      ? DateFormat('EEEE, MMM dd, yyyy').format(_dueDate!)
+                      : 'No due date set',
                   style: TextStyle(
-                    color: _dueDate != null ? Colors.black87 : Colors.grey,
+                    color: _dueDate != null ? null : Colors.grey[600],
+                    fontWeight: _dueDate != null ? FontWeight.w500 : FontWeight.normal,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Clear due date button (if date is set)
             if (_dueDate != null)
@@ -295,44 +297,77 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                     _dueDate = null;
                   });
                 },
-                icon: const Icon(Icons.clear),
+                icon: const Icon(Icons.close_rounded, size: 18),
                 label: const Text('Clear Due Date'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red,
                 ),
               ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 40),
 
             // Save button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveTask,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveTask,
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-              ),
-              child: Text(
-                isEditing ? 'Update Task' : 'Add Task',
-                style: const TextStyle(fontSize: 16),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isEditing ? Icons.check_rounded : Icons.add_rounded,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isEditing ? 'Update Task' : 'Add Task',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
 
             // Cancel button
-            OutlinedButton(
-              onPressed: _isLoading ? null : () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton(
+                onPressed: _isLoading ? null : () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontSize: 16),
-              ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),

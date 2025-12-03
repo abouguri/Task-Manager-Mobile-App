@@ -12,13 +12,19 @@ class TaskDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Task Details'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           // Edit button
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_rounded),
             onPressed: () {
               final task = context.read<TaskProvider>().getTaskById(taskId);
               if (task != null) {
@@ -30,12 +36,15 @@ class TaskDetailScreen extends StatelessWidget {
                 );
               }
             },
+            tooltip: 'Edit',
           ),
           // Delete button
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete_outline_rounded),
             onPressed: () => _showDeleteConfirmation(context),
+            tooltip: 'Delete',
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Consumer<TaskProvider>(
@@ -47,23 +56,43 @@ class TaskDetailScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 80,
-                    color: Colors.grey[400],
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.search_off_rounded,
+                      size: 80,
+                      color: Colors.grey[400],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 24),
+                  const Text(
                     'Task not found',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'This task may have been deleted',
+                    style: TextStyle(
+                      fontSize: 15,
                       color: Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Go Back'),
+                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    label: const Text('Go Back'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
                   ),
                 ],
               ),
@@ -71,40 +100,93 @@ class TaskDetailScreen extends StatelessWidget {
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Completion status card
-                Card(
-                  color: task.isCompleted ? Colors.green[50] : Colors.blue[50],
-                  child: ListTile(
-                    leading: Icon(
-                      task.isCompleted ? Icons.check_circle : Icons.pending,
-                      color: task.isCompleted ? Colors.green : Colors.blue,
-                      size: 32,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: task.isCompleted
+                          ? [const Color(0xFF51CF66).withOpacity(0.1), const Color(0xFF51CF66).withOpacity(0.05)]
+                          : [const Color(0xFF6C63FF).withOpacity(0.1), const Color(0xFF6C63FF).withOpacity(0.05)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    title: Text(
-                      task.isCompleted ? 'Completed' : 'Pending',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: task.isCompleted
+                          ? const Color(0xFF51CF66).withOpacity(0.3)
+                          : const Color(0xFF6C63FF).withOpacity(0.3),
+                      width: 1,
                     ),
-                    trailing: Switch(
-                      value: task.isCompleted,
-                      onChanged: (value) {
-                        taskProvider.toggleTaskCompletion(task);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              value
-                                  ? 'Task marked as completed!'
-                                  : 'Task marked as pending!',
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: task.isCompleted
+                              ? const Color(0xFF51CF66)
+                              : const Color(0xFF6C63FF),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          task.isCompleted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              task.isCompleted ? 'Completed' : 'In Progress',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: task.isCompleted
+                                    ? const Color(0xFF51CF66)
+                                    : const Color(0xFF6C63FF),
+                                letterSpacing: -0.3,
+                              ),
                             ),
-                            backgroundColor: value ? Colors.green : Colors.blue,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
+                            const SizedBox(height: 4),
+                            Text(
+                              task.isCompleted
+                                  ? 'Great job finishing this task!'
+                                  : 'Mark as complete when done',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: task.isCompleted,
+                        activeColor: const Color(0xFF51CF66),
+                        onChanged: (value) {
+                          taskProvider.toggleTaskCompletion(task);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                value
+                                    ? 'Task marked as completed!'
+                                    : 'Task marked as pending!',
+                              ),
+                              backgroundColor: value ? Colors.green : Colors.blue,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),

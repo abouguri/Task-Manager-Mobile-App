@@ -8,17 +8,46 @@ void main() {
   runApp(const MyApp());
 }
 
+/// Theme provider for managing light/dark mode
+class ThemeProvider extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  ThemeMode get themeMode => _themeMode;
+
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  void toggleTheme() {
+    if (_themeMode == ThemeMode.light) {
+      _themeMode = ThemeMode.dark;
+    } else {
+      _themeMode = ThemeMode.light;
+    }
+    notifyListeners();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+  }
+}
+
 /// Main application widget
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => TaskProvider(),
-      child: MaterialApp(
-        title: 'Task Manager',
-        debugShowCheckedModeBanner: false,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => TaskProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Task Manager',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
         
         // Minimalist Fancy Theme - Light Mode
         theme: ThemeData(
@@ -224,9 +253,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
         
-        // Theme mode
-        themeMode: ThemeMode.system,
-        
         // Home screen
         home: const HomeScreen(),
         
@@ -244,6 +270,8 @@ class MyApp extends StatelessWidget {
             );
           }
           return null;
+        },
+          );
         },
       ),
     );
