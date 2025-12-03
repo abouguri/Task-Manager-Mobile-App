@@ -331,16 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: taskProvider.tasks.length,
               itemBuilder: (context, index) {
                 final task = taskProvider.tasks[index];
-                return TaskCard(
-                  task: task,
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/task-detail',
-                      arguments: task.id,
-                    );
-                  },
-                );
+                return TaskCard(task: task);
               },
             ),
           );

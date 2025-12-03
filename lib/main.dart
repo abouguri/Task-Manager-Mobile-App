@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/task_provider.dart';
 import 'screens/home_screen.dart';
-import 'screens/task_detail_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -253,23 +252,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
         
+        
         // Home screen
         home: const HomeScreen(),
         
         // Named routes
         routes: {
           '/home': (context) => const HomeScreen(),
-        },
-        
-        // Handle named routes with arguments
-        onGenerateRoute: (settings) {
-          if (settings.name == '/task-detail') {
-            final taskId = settings.arguments as int;
-            return MaterialPageRoute(
-              builder: (context) => TaskDetailScreen(taskId: taskId),
-            );
-          }
-          return null;
         },
           );
         },
