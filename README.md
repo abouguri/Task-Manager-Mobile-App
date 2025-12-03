@@ -135,18 +135,3 @@ Open an issue and let's chat!
 ---
 
 Made with 💜 and Flutter
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👤 Author
-
-**@abouguri**
-- GitHub: [@abouguri](https://github.com/abouguri)
-
----
-
-Built with Flutter 💙
