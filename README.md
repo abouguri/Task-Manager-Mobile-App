@@ -1,6 +1,6 @@
 # ✨ Task Manager
 
-> A beautiful, minimalist Flutter task manager with dark mode and expandable cards 🌙
+> A beautiful, minimalist Flutter task manager with swipe actions, statistics, and dark mode 🚀
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=flat&logo=dart&logoColor=white)
@@ -8,9 +8,12 @@
 
 ## ✨ What makes it special?
 
-🎨 **Modern Minimalist UI** - Clean design with purple accents  
-🌓 **Dark/Light Mode** - Toggle theme with one tap  
+🎨 **Modern Minimalist UI** - Clean design with purple gradient accents  
+🌓 **Dark/Light Mode** - System-aware with manual toggle  
 📱 **Expandable Cards** - No separate screens, everything inline  
+👆 **Swipe Actions** - Swipe right to complete, left to delete  
+📊 **Progress Statistics** - Track completion rate and daily goals  
+⚙️ **Settings Screen** - Theme preferences and app info  
 ⚡ **Lightning Fast** - SQLite local storage  
 🎯 **Smart Filters** - Priority, category, and status filters  
 🔍 **Live Search** - Find tasks instantly  
@@ -30,10 +33,14 @@ flutter run
 | What | How Cool Is It? |
 |------|----------------|
 | **Expandable Cards** | Click to expand - all details inline 🎴 |
+| **Swipe Actions** | Swipe right ✅ to complete, left 🗑️ to delete |
+| **Statistics Card** | Beautiful gradient card with progress tracking 📈 |
 | **Theme Toggle** | Dark mode for night owls 🦉 |
+| **Settings Screen** | Customize your experience ⚙️ |
 | **Priority Dots** | Glowing indicators with shadows ✨ |
 | **Custom Checkboxes** | Smooth animations 🎯 |
 | **Smart Badges** | Color-coded categories 🏷️ |
+| **Empty State** | Helpful onboarding with feature highlights 🎉 |
 
 ## 🎨 Design System
 
@@ -57,12 +64,14 @@ lib/
 ├── 🔄 providers/
 │   └── task_provider.dart    # State management
 ├── 📱 screens/
-│   ├── home_screen.dart      # Main screen with expandable cards
-│   └── add_edit_task_screen.dart  # Create/edit tasks
+│   ├── home_screen.dart      # Main screen with stats & expandable cards
+│   ├── add_edit_task_screen.dart  # Create/edit tasks
+│   └── settings_screen.dart  # Theme & app preferences
 ├── 💾 services/
 │   └── database_helper.dart  # SQLite magic
 └── 🎴 widgets/
-    └── task_card.dart        # Expandable card widget
+    ├── task_card.dart        # Expandable card with swipe actions
+    └── statistics_card.dart  # Progress tracking widget
 ```
 
 ## 🛠️ Tech Stack
@@ -75,22 +84,31 @@ lib/
 
 ## 🎯 How to Use
 
-1. **Add Task** - Tap the floating button
-2. **Expand Card** - Click any task to see details
-3. **Toggle Complete** - Tap the checkbox
-4. **Edit/Delete** - Expand card and use action buttons
-5. **Switch Theme** - Tap sun/moon icon in app bar
-6. **Search** - Use the search icon
-7. **Filter** - Tap the filter icon
+1. **Add Task** - Tap the floating "Add Task" button
+2. **View Statistics** - Check your progress at the top of the list
+3. **Expand Card** - Click any task to see full details
+4. **Swipe Right** - Complete a task with swipe gesture ✅
+5. **Swipe Left** - Delete a task with confirmation 🗑️
+6. **Toggle Complete** - Tap the checkbox
+7. **Edit/Delete** - Expand card and use action buttons
+8. **Switch Theme** - Tap sun/moon icon or go to Settings
+9. **Settings** - Tap gear icon for preferences
+10. **Search** - Use the search icon
+11. **Filter** - Tap the filter icon
 
 ## 🌟 Cool Details
 
-- 🎨 Gradient status cards
+- 🎨 Gradient statistics card with progress bar
+- 👆 Swipe gestures with visual feedback
+- 📊 Real-time completion tracking
+- ⚙️ Comprehensive settings screen
+- 🎭 Smooth fade-in animations for task cards
+- 🎪 Scale animation for empty state
 - 📅 Smart due date formatting (Today, Tomorrow, Overdue)
-- 🎭 Smooth expand/collapse animations
 - 💫 Priority dots with glow effects
-- 🎯 Minimalist badges
+- 🎯 Dismissible cards with colored backgrounds
 - 📱 Responsive design
+- 🔔 Snackbar notifications for actions
 
 ## 🚢 Build It
 
