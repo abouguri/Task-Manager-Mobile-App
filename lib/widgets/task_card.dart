@@ -25,9 +25,69 @@ class _TaskCardState extends State<TaskCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
+    return Dismissible(
+      key: Key(widget.task.id.toString()),
+      background: _buildSwipeBackground(
+        alignment: Alignment.centerLeft,
+        color: const Color(0xFF51CF66),
+        icon: Icons.check_circle_rounded,
+        label: 'Complete',
+      ),
+      secondaryBackground: _buildSwipeBackground(
+        alignment: Alignment.centerRight,
+        color: const Color(0xFFFF6B6B),
+        icon: Icons.delete_rounded,
+        label: 'Delete',
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          // Swipe right - Complete task
+          context.read<TaskProvider>().toggleTaskCompletion(widget.task);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.task.isCompleted ? 'Task marked incomplete' : 'Task completed!'),
+              backgroundColor: const Color(0xFF51CF66),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          return false; // Don't remove from list
+        } else {
+          // Swipe left - Delete task
+          return await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Delete Task'),
+              content: Text('Are you sure you want to delete "${widget.task.title}"?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
+          ) ?? false;
+        }
+      },
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          context.read<TaskProvider>().deleteTask(widget.task.id!);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Task deleted'),
+              backgroundColor: Color(0xFFFF6B6B),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
         children: [
           InkWell(
             onTap: () {
@@ -297,6 +357,40 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
+        ],
+      ),
+    ),
+    );
+  }
+
+  /// Build swipe action background
+  Widget _buildSwipeBackground({
+    required Alignment alignment,
+    required Color color,
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 32),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );

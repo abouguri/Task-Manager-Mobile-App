@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/task_card.dart';
+import '../widgets/statistics_card.dart';
 import 'add_edit_task_screen.dart';
+import 'settings_screen.dart';
 import '../main.dart';
 
 /// Home screen displaying the list of tasks with search and filter capabilities
@@ -239,6 +241,19 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             : const Text('Tasks'),
         actions: [
+          // Settings button
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+            tooltip: 'Settings',
+          ),
           // Theme toggle button
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, child) {
@@ -285,40 +300,110 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (taskProvider.tasks.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6C63FF).withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 80,
-                      color: const Color(0xFF6C63FF).withOpacity(0.6),
-                    ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Animated icon
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 800),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            child: Container(
+                              padding: const EdgeInsets.all(40),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF6C63FF).withOpacity(0.2),
+                                    const Color(0xFFFF6584).withOpacity(0.2),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.task_alt_rounded,
+                                size: 100,
+                                color: const Color(0xFF6C63FF).withOpacity(0.8),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Ready to get organized?',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Create your first task and start crushing your goals',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      // Features list
+                      _buildFeatureItem(
+                        icon: Icons.swipe_rounded,
+                        title: 'Swipe to complete',
+                        description: 'Quick actions at your fingertips',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildFeatureItem(
+                        icon: Icons.expand_more_rounded,
+                        title: 'Tap to expand',
+                        description: 'See full details instantly',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildFeatureItem(
+                        icon: Icons.trending_up_rounded,
+                        title: 'Track progress',
+                        description: 'Watch your productivity grow',
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      // CTA button
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddEditTaskScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Create Your First Task'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'No tasks yet',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Tap the + button to create your first task',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey[600],
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                ],
+                ),
               ),
             );
           }
@@ -327,11 +412,25 @@ class _HomeScreenState extends State<HomeScreen> {
             onRefresh: () => taskProvider.loadTasks(),
             color: const Color(0xFF6C63FF),
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: taskProvider.tasks.length,
+              padding: const EdgeInsets.only(bottom: 80),
+              itemCount: taskProvider.tasks.length + 1, // +1 for statistics card
               itemBuilder: (context, index) {
-                final task = taskProvider.tasks[index];
-                return TaskCard(task: task);
+                // Statistics card at the top
+                if (index == 0) {
+                  return AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: const StatisticsCard(),
+                  );
+                }
+                
+                // Task cards with fade-in animation
+                final task = taskProvider.tasks[index - 1];
+                return AnimatedOpacity(
+                  opacity: 1.0,
+                  duration: Duration(milliseconds: 300 + (index * 50)),
+                  child: TaskCard(task: task),
+                );
               },
             ),
           );
@@ -349,6 +448,53 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add Task'),
       ),
+    );
+  }
+
+  /// Build feature item for empty state
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF6C63FF).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: const Color(0xFF6C63FF),
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
