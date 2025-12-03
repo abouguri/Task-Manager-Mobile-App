@@ -10,6 +10,9 @@
 .svn/
 migrate_working_dir/
 
+# Agent configuration
+AGENTS.md
+
 # IntelliJ related
 *.iml
 *.ipr
