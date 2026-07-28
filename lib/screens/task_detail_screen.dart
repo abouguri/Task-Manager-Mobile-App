@@ -240,6 +240,61 @@ class TaskDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
+                // Effort Estimate
+                _buildSectionTitle('Effort'),
+                _buildInfoCard(
+                  icon: Icons.timer_rounded,
+                  content: '${task.effortMinutes} minutes',
+                  color: Colors.teal,
+                ),
+                const SizedBox(height: 16),
+
+                // Energy Level
+                _buildSectionTitle('Energy Level'),
+                _buildInfoCard(
+                  icon: Icons.bolt_rounded,
+                  content: task.energyLevel,
+                  color: Colors.deepOrange,
+                ),
+                const SizedBox(height: 16),
+
+                // Tags
+                if (task.tags.isNotEmpty) ...[
+                  _buildSectionTitle('Tags'),
+                  Card(
+                    elevation: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: task.tags
+                            .map(
+                              (tag) => Chip(
+                                label: Text(tag),
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Completion Timestamp
+                if (task.completedAt != null) ...[
+                  _buildSectionTitle('Completed At'),
+                  _buildInfoCard(
+                    icon: Icons.check_circle_rounded,
+                    content: DateFormat('EEEE, MMMM dd, yyyy - hh:mm a')
+                        .format(task.completedAt!),
+                    color: const Color(0xFF51CF66),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Created At
                 _buildSectionTitle('Created'),
                 _buildInfoCard(

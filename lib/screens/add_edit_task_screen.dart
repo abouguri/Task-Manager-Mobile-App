@@ -18,9 +18,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _tagsController = TextEditingController();
   
   String _priority = 'Medium';
   String _category = 'Personal';
+  String _energyLevel = 'Flexible';
+  int _effortMinutes = 15;
   DateTime? _dueDate;
   bool _isLoading = false;
 
@@ -31,8 +34,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description ?? '';
+      _tagsController.text = widget.task!.tags.join(', ');
       _priority = widget.task!.priority;
       _category = widget.task!.category;
+      _energyLevel = widget.task!.energyLevel;
+      _effortMinutes = widget.task!.effortMinutes;
       _dueDate = widget.task!.dueDate;
     }
   }
@@ -41,6 +47,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -89,6 +96,13 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             : _descriptionController.text.trim(),
         priority: _priority,
         category: _category,
+        tags: _tagsController.text
+          .split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList(),
+        effortMinutes: _effortMinutes,
+        energyLevel: _energyLevel,
         dueDate: _dueDate,
         isCompleted: widget.task?.isCompleted ?? false,
         createdAt: widget.task?.createdAt,
@@ -260,6 +274,62 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               onChanged: (value) {
                 setState(() {
                   _category = value!;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Tags field
+            TextFormField(
+              controller: _tagsController,
+              decoration: const InputDecoration(
+                labelText: 'Tags',
+                hintText: 'home, finance, urgent',
+                prefixIcon: Icon(Icons.tag_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 24),
+
+            // Effort estimate
+            DropdownButtonFormField<int>(
+              value: _effortMinutes,
+              decoration: const InputDecoration(
+                labelText: 'Effort Estimate',
+                prefixIcon: Icon(Icons.timer_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+              ),
+              items: const [
+                DropdownMenuItem(value: 15, child: Text('15 min')),
+                DropdownMenuItem(value: 30, child: Text('30 min')),
+                DropdownMenuItem(value: 60, child: Text('1 hour')),
+                DropdownMenuItem(value: 120, child: Text('2 hours')),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _effortMinutes = value ?? 15;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Energy level
+            DropdownButtonFormField<String>(
+              value: _energyLevel,
+              decoration: const InputDecoration(
+                labelText: 'Energy Level',
+                prefixIcon: Icon(Icons.bolt_rounded),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+              ),
+              items: const [
+                DropdownMenuItem(value: 'Deep Work', child: Text('Deep Work')),
+                DropdownMenuItem(value: 'Quick Win', child: Text('Quick Win')),
+                DropdownMenuItem(value: 'Flexible', child: Text('Flexible')),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _energyLevel = value ?? 'Flexible';
                 });
               },
             ),

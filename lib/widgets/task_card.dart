@@ -202,8 +202,38 @@ class _TaskCardState extends State<TaskCard> {
                                 color: _getDueDateColor(widget.task.dueDate!),
                                 isDark: isDark,
                               ),
+
+                            _buildMinimalBadge(
+                              icon: Icons.timer_rounded,
+                              label: '${widget.task.effortMinutes} min',
+                              color: Colors.teal,
+                              isDark: isDark,
+                            ),
+
+                            _buildMinimalBadge(
+                              icon: Icons.bolt_rounded,
+                              label: widget.task.energyLevel,
+                              color: Colors.deepOrange,
+                              isDark: isDark,
+                            ),
                           ],
                         ),
+                        if (widget.task.tags.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: widget.task.tags
+                                .map(
+                                  (tag) => Chip(
+                                    label: Text(tag),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -292,13 +322,38 @@ class _TaskCardState extends State<TaskCard> {
                   const SizedBox(height: 12),
 
                   // Created date
-                  if (widget.task.createdAt != null) ...[
+                  Row(
+                    children: [
+                      Icon(Icons.access_time_rounded, size: 18, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Created',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        DateFormat('MMM dd, yyyy • hh:mm a').format(widget.task.createdAt),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (widget.task.tags.isNotEmpty) ...[
                     Row(
                       children: [
-                        Icon(Icons.access_time_rounded, size: 18, color: Colors.grey[600]),
+                        Icon(Icons.sell_rounded, size: 18, color: Colors.grey[600]),
                         const SizedBox(width: 8),
                         Text(
-                          'Created',
+                          'Tags',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -306,15 +361,21 @@ class _TaskCardState extends State<TaskCard> {
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('MMM dd, yyyy • hh:mm a').format(widget.task.createdAt!),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[700],
-                          ),
-                        ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: widget.task.tags
+                          .map(
+                            (tag) => Chip(
+                              label: Text(tag),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 16),
                   ],

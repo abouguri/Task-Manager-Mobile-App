@@ -6,6 +6,8 @@ import '../providers/task_provider.dart';
 class StatisticsCard extends StatelessWidget {
   const StatisticsCard({super.key});
 
+  static const int _xpPerCompletedTask = 20;
+
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
@@ -15,6 +17,9 @@ class StatisticsCard extends StatelessWidget {
     final completedTasks = allTasks.where((task) => task.isCompleted).length;
     final totalTasks = allTasks.length;
     final completionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100).toInt() : 0;
+    final xp = completedTasks * _xpPerCompletedTask;
+    final level = (xp / 100).floor() + 1;
+    final levelProgress = (xp % 100) / 100;
     
     // Tasks completed today
     final now = DateTime.now();
@@ -22,13 +27,27 @@ class StatisticsCard extends StatelessWidget {
     final completedToday = allTasks.where((task) {
       if (!task.isCompleted) return false;
       // Use createdAt as a proxy - in a real app you'd have updatedAt
+      final completedAt = task.completedAt ?? task.createdAt;
       final taskDate = DateTime(
-        task.createdAt.year,
-        task.createdAt.month,
-        task.createdAt.day,
+        completedAt.year,
+        completedAt.month,
+        completedAt.day,
       );
       return taskDate == today;
     }).length;
+
+    final completionDates = allTasks
+        .where((task) => task.isCompleted)
+        .map((task) => DateTime(
+              (task.completedAt ?? task.createdAt).year,
+              (task.completedAt ?? task.createdAt).month,
+              (task.completedAt ?? task.createdAt).day,
+            ))
+        .toSet()
+        .toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    final streak = _calculateStreak(completionDates);
     
     // Tasks due today
     final dueToday = allTasks.where((task) {
@@ -40,6 +59,19 @@ class StatisticsCard extends StatelessWidget {
       );
       return dueDate == today && !task.isCompleted;
     }).length;
+
+    final weeklyCompletionCounts = List<int>.generate(7, (index) {
+      final day = today.subtract(Duration(days: 6 - index));
+      return allTasks.where((task) {
+        if (!task.isCompleted || task.completedAt == null) return false;
+        final completedDate = DateTime(
+          task.completedAt!.year,
+          task.completedAt!.month,
+          task.completedAt!.day,
+        );
+        return completedDate == day;
+      }).length;
+    });
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -93,6 +125,24 @@ class StatisticsCard extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
+          // Gamification header
+          Row(
+            children: [
+              Expanded(
+                child: _buildLevelCard(
+                  level: level,
+                  xp: xp,
+                  progress: levelProgress,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStreakCard(streak: streak),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
           // Stats Grid
           Row(
             children: [
@@ -112,6 +162,87 @@ class StatisticsCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+
+          // Weekly completion trend
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Completion Trend',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: weeklyCompletionCounts.asMap().entries.map((entry) {
+                  final value = entry.value;
+                  final height = value == 0 ? 8.0 : 18.0 + (value * 10.0);
+                  final isTodayColumn = entry.key == 6;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            height: height,
+                            decoration: BoxDecoration(
+                              color: isTodayColumn
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.55),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _weekdayLabel(dayIndex: entry.key),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Challenge strip
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.emoji_events_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    streak >= 3
+                        ? 'Daily challenge unlocked: keep your streak alive.'
+                        : 'Daily challenge: complete 3 tasks today for a bonus.',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.92),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -202,5 +333,118 @@ class StatisticsCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildLevelCard({
+    required int level,
+    required int xp,
+    required double progress,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.star_rounded, color: Colors.white, size: 28),
+          const SizedBox(height: 12),
+          Text(
+            'Level $level',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$xp XP',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.white.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStreakCard({required int streak}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 28),
+          const SizedBox(height: 12),
+          Text(
+            '$streak day streak',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            streak > 0 ? 'Keep the momentum going' : 'Complete a task to start one',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _calculateStreak(List<DateTime> sortedCompletionDates) {
+    if (sortedCompletionDates.isEmpty) {
+      return 0;
+    }
+
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    var streak = 0;
+    var cursor = normalizedToday;
+
+    for (final date in sortedCompletionDates) {
+      if (date == cursor) {
+        streak += 1;
+        cursor = cursor.subtract(const Duration(days: 1));
+      } else if (date.isBefore(cursor)) {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
+  String _weekdayLabel({required int dayIndex}) {
+    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    return labels[(dayIndex + 1) % 7];
   }
 }

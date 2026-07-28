@@ -101,7 +101,11 @@ class TaskProvider with ChangeNotifier {
 
   /// Toggle task completion status
   Future<void> toggleTaskCompletion(Task task) async {
-    final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
+    final isNowCompleted = !task.isCompleted;
+    final updatedTask = task.copyWith(
+      isCompleted: isNowCompleted,
+      completedAt: isNowCompleted ? DateTime.now() : null,
+    );
     await updateTask(updatedTask);
   }
 

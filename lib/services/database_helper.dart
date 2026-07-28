@@ -19,7 +19,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 3;
   static const String _tableName = 'tasks';
 
   /// Get database instance (create if doesn't exist)
@@ -55,8 +55,12 @@ class DatabaseHelper {
         description TEXT,
         priority TEXT NOT NULL,
         category TEXT NOT NULL,
+        tags TEXT NOT NULL DEFAULT '',
+        effortMinutes INTEGER NOT NULL DEFAULT 15,
+        energyLevel TEXT NOT NULL DEFAULT 'Flexible',
         dueDate TEXT,
         isCompleted INTEGER NOT NULL DEFAULT 0,
+        completedAt TEXT,
         createdAt TEXT NOT NULL
       )
     ''');
@@ -64,10 +68,11 @@ class DatabaseHelper {
 
   /// Handle database upgrade
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle database migrations here if needed in future versions
     if (oldVersion < newVersion) {
-      // Example: Add new column
-      // await db.execute('ALTER TABLE $_tableName ADD COLUMN newColumn TEXT');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN tags TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN effortMinutes INTEGER NOT NULL DEFAULT 15');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN energyLevel TEXT NOT NULL DEFAULT "Flexible"');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN completedAt TEXT');
     }
   }
 

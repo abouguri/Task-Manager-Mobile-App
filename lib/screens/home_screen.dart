@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
+import '../widgets/focus_now_card.dart';
 import '../widgets/task_card.dart';
 import '../widgets/statistics_card.dart';
 import 'add_edit_task_screen.dart';
@@ -413,10 +414,19 @@ class _HomeScreenState extends State<HomeScreen> {
             color: const Color(0xFF6C63FF),
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 80),
-              itemCount: taskProvider.tasks.length + 1, // +1 for statistics card
+              itemCount: taskProvider.tasks.length + 2, // +2 for focus card and statistics card
               itemBuilder: (context, index) {
-                // Statistics card at the top
+                // Focus suggestions card at the top
                 if (index == 0) {
+                  return AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: const Duration(milliseconds: 350),
+                    child: const FocusNowCard(),
+                  );
+                }
+
+                // Statistics card below it
+                if (index == 1) {
                   return AnimatedOpacity(
                     opacity: 1.0,
                     duration: const Duration(milliseconds: 500),
@@ -425,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 
                 // Task cards with fade-in animation
-                final task = taskProvider.tasks[index - 1];
+                final task = taskProvider.tasks[index - 2];
                 return AnimatedOpacity(
                   opacity: 1.0,
                   duration: Duration(milliseconds: 300 + (index * 50)),

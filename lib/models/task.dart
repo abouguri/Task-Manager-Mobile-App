@@ -5,8 +5,12 @@ class Task {
   final String? description;
   final String priority; // 'Low', 'Medium', 'High'
   final String category; // 'Work', 'Personal', 'Shopping', 'Health', 'Other'
+  final List<String> tags;
+  final int effortMinutes;
+  final String energyLevel; // 'Deep Work', 'Quick Win', 'Flexible'
   final DateTime? dueDate;
   final bool isCompleted;
+  final DateTime? completedAt;
   final DateTime createdAt;
 
   Task({
@@ -15,8 +19,12 @@ class Task {
     this.description,
     required this.priority,
     required this.category,
+    this.tags = const [],
+    this.effortMinutes = 15,
+    this.energyLevel = 'Flexible',
     this.dueDate,
     this.isCompleted = false,
+    this.completedAt,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -28,8 +36,12 @@ class Task {
       'description': description,
       'priority': priority,
       'category': category,
+      'tags': tags.join(','),
+      'effortMinutes': effortMinutes,
+      'energyLevel': energyLevel,
       'dueDate': dueDate?.toIso8601String(),
       'isCompleted': isCompleted ? 1 : 0,
+      'completedAt': completedAt?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -42,10 +54,16 @@ class Task {
       description: map['description'] as String?,
       priority: map['priority'] as String,
       category: map['category'] as String,
+        tags: _parseTags(map['tags'] as String?),
+        effortMinutes: (map['effortMinutes'] as int?) ?? 15,
+        energyLevel: (map['energyLevel'] as String?) ?? 'Flexible',
       dueDate: map['dueDate'] != null 
           ? DateTime.parse(map['dueDate'] as String) 
           : null,
       isCompleted: map['isCompleted'] == 1,
+        completedAt: map['completedAt'] != null
+            ? DateTime.parse(map['completedAt'] as String)
+            : null,
       createdAt: DateTime.parse(map['createdAt'] as String),
     );
   }
@@ -57,8 +75,12 @@ class Task {
     String? description,
     String? priority,
     String? category,
+    List<String>? tags,
+    int? effortMinutes,
+    String? energyLevel,
     DateTime? dueDate,
     bool? isCompleted,
+    DateTime? completedAt,
     DateTime? createdAt,
   }) {
     return Task(
@@ -67,10 +89,26 @@ class Task {
       description: description ?? this.description,
       priority: priority ?? this.priority,
       category: category ?? this.category,
+      tags: tags ?? this.tags,
+      effortMinutes: effortMinutes ?? this.effortMinutes,
+      energyLevel: energyLevel ?? this.energyLevel,
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
+      completedAt: completedAt ?? this.completedAt,
       createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  static List<String> _parseTags(String? rawTags) {
+    if (rawTags == null || rawTags.trim().isEmpty) {
+      return const [];
+    }
+
+    return rawTags
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
   }
 
   @override
