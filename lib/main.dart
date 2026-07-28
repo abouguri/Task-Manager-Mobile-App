@@ -76,7 +76,7 @@ class MyApp extends StatelessWidget {
           ),
           
           // Card theme - Sleek and modern
-          cardTheme: CardTheme(
+          cardTheme: CardThemeData(
             elevation: 0,
             color: Colors.white,
             shadowColor: Colors.black.withOpacity(0.05),
@@ -213,7 +213,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           
-          cardTheme: CardTheme(
+          cardTheme: CardThemeData(
             elevation: 0,
             color: const Color(0xFF1E1E1E),
             shape: RoundedRectangleBorder(
