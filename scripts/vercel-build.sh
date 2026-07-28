@@ -17,6 +17,8 @@ fi
 
 export PATH="$FLUTTER_BIN:$PATH"
 
+git config --global --add safe.directory "$FLUTTER_ROOT"
+
 flutter config --enable-web
 flutter --version
 
