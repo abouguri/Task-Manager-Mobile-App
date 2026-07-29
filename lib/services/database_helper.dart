@@ -19,7 +19,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
   static const String _tableName = 'tasks';
 
   /// Get database instance (create if doesn't exist)
@@ -53,12 +53,17 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         description TEXT,
-        priority TEXT NOT NULL,
-        category TEXT NOT NULL,
+        priority TEXT NOT NULL DEFAULT 'None',
+        category TEXT NOT NULL DEFAULT 'Inbox',
         tags TEXT NOT NULL DEFAULT '',
-        effortMinutes INTEGER NOT NULL DEFAULT 15,
+        effortMinutes INTEGER NOT NULL DEFAULT 0,
         energyLevel TEXT NOT NULL DEFAULT 'Flexible',
         dueDate TEXT,
+        whenValue TEXT NOT NULL DEFAULT 'inbox',
+        scheduledFor TEXT,
+        deadline TEXT,
+        projectId TEXT,
+        areaId TEXT,
         isCompleted INTEGER NOT NULL DEFAULT 0,
         completedAt TEXT,
         createdAt TEXT NOT NULL
@@ -68,11 +73,19 @@ class DatabaseHelper {
 
   /// Handle database upgrade
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < newVersion) {
+    if (oldVersion < 3) {
       await db.execute('ALTER TABLE $_tableName ADD COLUMN tags TEXT NOT NULL DEFAULT ""');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN effortMinutes INTEGER NOT NULL DEFAULT 15');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN energyLevel TEXT NOT NULL DEFAULT "Flexible"');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN completedAt TEXT');
+    }
+    if (oldVersion < 4) {
+      await db.execute("ALTER TABLE $_tableName ADD COLUMN whenValue TEXT NOT NULL DEFAULT 'inbox'");
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN scheduledFor TEXT');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN deadline TEXT');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN projectId TEXT');
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN areaId TEXT');
+      await db.execute("UPDATE $_tableName SET scheduledFor = dueDate, whenValue = CASE WHEN dueDate IS NULL THEN 'inbox' ELSE 'date' END");
     }
   }
 
@@ -150,10 +163,9 @@ class DatabaseHelper {
         // Web platform: return sorted in-memory storage
         final sortedTasks = List<Task>.from(_webStorage);
         sortedTasks.sort((a, b) {
-          // Sort by due date, then by created date
-          if (a.dueDate != null && b.dueDate != null) {
-            return a.dueDate!.compareTo(b.dueDate!);
-          } else if (a.dueDate != null) {
+          if (a.scheduledFor != null && b.scheduledFor != null) {
+            return a.scheduledFor!.compareTo(b.scheduledFor!);
+          } else if (a.scheduledFor != null) {
             return -1;
           } else if (b.dueDate != null) {
             return 1;
@@ -166,7 +178,7 @@ class DatabaseHelper {
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
-        orderBy: 'dueDate ASC, createdAt DESC',
+        orderBy: 'scheduledFor ASC, createdAt DESC',
       );
 
       return List.generate(maps.length, (i) {

@@ -1,14 +1,17 @@
-/// Task model class representing a task in the task management app
+enum TaskWhen { inbox, today, evening, date, anytime, someday }
+
+/// A deliberately small task record. The old category/priority fields are
+/// retained only as migration compatibility accessors; new UI never exposes them.
 class Task {
   final int? id;
   final String title;
   final String? description;
-  final String priority; // 'Low', 'Medium', 'High'
-  final String category; // 'Work', 'Personal', 'Shopping', 'Health', 'Other'
   final List<String> tags;
-  final int effortMinutes;
-  final String energyLevel; // 'Deep Work', 'Quick Win', 'Flexible'
-  final DateTime? dueDate;
+  final TaskWhen when;
+  final DateTime? scheduledFor;
+  final DateTime? deadline;
+  final String? projectId;
+  final String? areaId;
   final bool isCompleted;
   final DateTime? completedAt;
   final DateTime createdAt;
@@ -17,102 +20,90 @@ class Task {
     this.id,
     required this.title,
     this.description,
-    required this.priority,
-    required this.category,
     this.tags = const [],
-    this.effortMinutes = 15,
-    this.energyLevel = 'Flexible',
-    this.dueDate,
+    this.when = TaskWhen.inbox,
+    this.scheduledFor,
+    this.deadline,
+    this.projectId,
+    this.areaId,
     this.isCompleted = false,
     this.completedAt,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  /// Convert Task object to Map for database storage
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'priority': priority,
-      'category': category,
-      'tags': tags.join(','),
-      'effortMinutes': effortMinutes,
-      'energyLevel': energyLevel,
-      'dueDate': dueDate?.toIso8601String(),
-      'isCompleted': isCompleted ? 1 : 0,
-      'completedAt': completedAt?.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
+  /// Compatibility values for pre-redesign screens and stored databases.
+  String get priority => 'None';
+  String get category => projectId ?? areaId ?? 'Inbox';
+  int get effortMinutes => 0;
+  String get energyLevel => 'Flexible';
+  DateTime? get dueDate => scheduledFor;
 
-  /// Create Task object from Map (database query result)
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        // Kept in storage so v3 databases with NOT NULL legacy columns can
+        // receive redesigned tasks. They are never shown or used by the UI.
+        'priority': 'None',
+        'category': projectId ?? areaId ?? 'Inbox',
+        'tags': tags.join(','),
+        'effortMinutes': 0,
+        'energyLevel': 'Flexible',
+        'dueDate': scheduledFor?.toIso8601String(),
+        'whenValue': when.name,
+        'scheduledFor': scheduledFor?.toIso8601String(),
+        'deadline': deadline?.toIso8601String(),
+        'projectId': projectId,
+        'areaId': areaId,
+        'isCompleted': isCompleted ? 1 : 0,
+        'completedAt': completedAt?.toIso8601String(),
+        'createdAt': createdAt.toIso8601String(),
+      };
+
   factory Task.fromMap(Map<String, dynamic> map) {
+    final oldDueDate = map['dueDate'] as String?;
+    final scheduled = map['scheduledFor'] as String? ?? oldDueDate;
     return Task(
       id: map['id'] as int?,
       title: map['title'] as String,
       description: map['description'] as String?,
-      priority: map['priority'] as String,
-      category: map['category'] as String,
-        tags: _parseTags(map['tags'] as String?),
-        effortMinutes: (map['effortMinutes'] as int?) ?? 15,
-        energyLevel: (map['energyLevel'] as String?) ?? 'Flexible',
-      dueDate: map['dueDate'] != null 
-          ? DateTime.parse(map['dueDate'] as String) 
-          : null,
-      isCompleted: map['isCompleted'] == 1,
-        completedAt: map['completedAt'] != null
-            ? DateTime.parse(map['completedAt'] as String)
-            : null,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      tags: _parseTags(map['tags'] as String?),
+      when: _whenFrom(map['whenValue'] as String?, scheduled),
+      scheduledFor: scheduled == null ? null : DateTime.tryParse(scheduled),
+      deadline: map['deadline'] == null ? null : DateTime.tryParse(map['deadline'] as String),
+      projectId: map['projectId'] as String? ?? _legacyProject(map['category'] as String?),
+      areaId: map['areaId'] as String?,
+      isCompleted: map['isCompleted'] == 1 || map['isCompleted'] == true,
+      completedAt: map['completedAt'] == null ? null : DateTime.tryParse(map['completedAt'] as String),
+      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
     );
   }
 
-  /// Create a copy of Task with modified fields
   Task copyWith({
-    int? id,
-    String? title,
-    String? description,
-    String? priority,
-    String? category,
-    List<String>? tags,
-    int? effortMinutes,
-    String? energyLevel,
-    DateTime? dueDate,
-    bool? isCompleted,
-    DateTime? completedAt,
+    int? id, String? title, String? description, List<String>? tags,
+    TaskWhen? when, DateTime? scheduledFor, bool clearScheduledFor = false,
+    DateTime? deadline, bool clearDeadline = false, String? projectId,
+    String? areaId, bool? isCompleted, DateTime? completedAt, bool clearCompletedAt = false,
     DateTime? createdAt,
-  }) {
-    return Task(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      priority: priority ?? this.priority,
-      category: category ?? this.category,
-      tags: tags ?? this.tags,
-      effortMinutes: effortMinutes ?? this.effortMinutes,
-      energyLevel: energyLevel ?? this.energyLevel,
-      dueDate: dueDate ?? this.dueDate,
-      isCompleted: isCompleted ?? this.isCompleted,
-      completedAt: completedAt ?? this.completedAt,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
+  }) => Task(
+        id: id ?? this.id, title: title ?? this.title,
+        description: description ?? this.description, tags: tags ?? this.tags,
+        when: when ?? this.when,
+        scheduledFor: clearScheduledFor ? null : scheduledFor ?? this.scheduledFor,
+        deadline: clearDeadline ? null : deadline ?? this.deadline,
+        projectId: projectId ?? this.projectId, areaId: areaId ?? this.areaId,
+        isCompleted: isCompleted ?? this.isCompleted,
+        completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
+        createdAt: createdAt ?? this.createdAt,
+      );
 
-  static List<String> _parseTags(String? rawTags) {
-    if (rawTags == null || rawTags.trim().isEmpty) {
-      return const [];
-    }
-
-    return rawTags
-        .split(',')
-        .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
-        .toList();
-  }
-
-  @override
-  String toString() {
-    return 'Task(id: $id, title: $title, priority: $priority, category: $category, isCompleted: $isCompleted)';
-  }
+  static TaskWhen _whenFrom(String? raw, String? scheduled) =>
+      TaskWhen.values.where((value) => value.name == raw).firstOrNull ??
+      (scheduled == null ? TaskWhen.inbox : TaskWhen.date);
+  static String? _legacyProject(String? category) =>
+      category == null || category == 'Personal' || category == 'Inbox' ? null : category;
+  static List<String> _parseTags(String? raw) => raw == null || raw.trim().isEmpty
+      ? const [] : raw.split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
 }
+
+extension _FirstOrNull<T> on Iterable<T> { T? get firstOrNull => isEmpty ? null : first; }
