@@ -40,6 +40,12 @@ class TaskProvider with ChangeNotifier {
     notifyListeners();
   }
   Future<void> deleteTask(int id) async { await _dbHelper.deleteTask(id); _tasks.removeWhere((task) => task.id == id); notifyListeners(); }
+  Task? getTaskById(int id) {
+    for (final task in _tasks) {
+      if (task.id == id) return task;
+    }
+    return null;
+  }
   Future<void> toggleTaskCompletion(Task task) => updateTask(task.copyWith(isCompleted: !task.isCompleted, completedAt: task.isCompleted ? null : DateTime.now(), clearCompletedAt: task.isCompleted));
   Future<void> moveTo(Task task, TaskWhen when, {DateTime? date}) => updateTask(task.copyWith(when: when, scheduledFor: date, clearScheduledFor: when != TaskWhen.date));
   void searchTasks(String query) { _searchQuery = query; notifyListeners(); }

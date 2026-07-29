@@ -12,6 +12,7 @@ migrate_working_dir/
 
 # Agent configuration
 AGENTS.md
+CODEX.md
 
 # IntelliJ related
 *.iml
@@ -59,3 +60,8 @@ ios/Flutter/Flutter.podspec
 
 # Project specific
 Description.txt
+
+# Local development tools and generated iOS files
+.tools/
+ios/Flutter/ephemeral/
+TaskFlow_Things3_Redesign_Plan.md
