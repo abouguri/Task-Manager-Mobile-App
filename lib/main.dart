@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'design/taskflow_tokens.dart';
 import 'providers/task_provider.dart';
 import 'screens/home_screen.dart';
 
@@ -44,213 +45,11 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'Task Manager',
+            title: 'TaskFlow',
             debugShowCheckedModeBanner: false,
             themeMode: themeProvider.themeMode,
-        
-        // Minimalist Fancy Theme - Light Mode
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6C63FF), // Modern purple/indigo
-            brightness: Brightness.light,
-            primary: const Color(0xFF6C63FF),
-            secondary: const Color(0xFFFF6584),
-            surface: const Color(0xFFFAFAFA),
-            background: const Color(0xFFF5F5F7),
-          ),
-          scaffoldBackgroundColor: const Color(0xFFF5F5F7),
-          
-          // App Bar theme - Clean and minimal
-          appBarTheme: const AppBarTheme(
-            centerTitle: false,
-            elevation: 0,
-            backgroundColor: Color(0xFFF5F5F7),
-            foregroundColor: Color(0xFF1A1A1A),
-            titleTextStyle: TextStyle(
-              color: Color(0xFF1A1A1A),
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-            ),
-          ),
-          
-          // Card theme - Sleek and modern
-          cardTheme: CardThemeData(
-            elevation: 0,
-            color: Colors.white,
-            shadowColor: Colors.black.withOpacity(0.05),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: Colors.grey.withOpacity(0.08),
-                width: 1,
-              ),
-            ),
-          ),
-          
-          // Floating Action Button - Gradient effect
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            elevation: 0,
-            backgroundColor: Color(0xFF6C63FF),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-            ),
-          ),
-          
-          // Input Decoration - Minimal borders
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          ),
-          
-          // Elevated Button - Modern and clean
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: const Color(0xFF6C63FF),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          
-          // Text Button theme
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF6C63FF),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          
-          // Outlined Button theme
-          outlinedButtonTheme: OutlinedButtonThemeData(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF6C63FF),
-              side: const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-          
-          // Chip theme
-          chipTheme: ChipThemeData(
-            backgroundColor: Colors.grey.withOpacity(0.1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          ),
-          
-          // Checkbox theme
-          checkboxTheme: CheckboxThemeData(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-            fillColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF6C63FF);
-              }
-              return Colors.transparent;
-            }),
-            side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 2),
-          ),
-        ),
-        
-        // Dark theme - Elegant and sleek
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6C63FF),
-            brightness: Brightness.dark,
-            primary: const Color(0xFF8B84FF),
-            secondary: const Color(0xFFFF8FA3),
-            surface: const Color(0xFF1E1E1E),
-            background: const Color(0xFF121212),
-          ),
-          scaffoldBackgroundColor: const Color(0xFF121212),
-          
-          appBarTheme: const AppBarTheme(
-            centerTitle: false,
-            elevation: 0,
-            backgroundColor: Color(0xFF121212),
-            foregroundColor: Colors.white,
-            titleTextStyle: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-            ),
-          ),
-          
-          cardTheme: CardThemeData(
-            elevation: 0,
-            color: const Color(0xFF1E1E1E),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: Colors.white.withOpacity(0.08),
-                width: 1,
-              ),
-            ),
-          ),
-          
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            elevation: 0,
-            backgroundColor: Color(0xFF8B84FF),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-            ),
-          ),
-          
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF8B84FF), width: 2),
-            ),
-            filled: true,
-            fillColor: const Color(0xFF1E1E1E),
-          ),
-        ),
+            theme: _buildTheme(Brightness.light),
+            darkTheme: _buildTheme(Brightness.dark),
         
         
         // Home screen
@@ -263,6 +62,143 @@ class MyApp extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  ThemeData _buildTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final background = isDark ? const Color(0xFF131311) : TaskFlowTokens.background;
+    final surface = isDark ? const Color(0xFF1B1B1A) : TaskFlowTokens.surface;
+    final surfaceMuted = isDark ? const Color(0xFF232320) : TaskFlowTokens.surfaceMuted;
+    final primary = isDark ? const Color(0xFF88A89D) : TaskFlowTokens.primary;
+    final textPrimary = isDark ? const Color(0xFFF3F1EB) : TaskFlowTokens.textPrimary;
+    final textSecondary = isDark ? const Color(0xFFB7B2A8) : TaskFlowTokens.textSecondary;
+    final border = isDark ? Colors.white.withOpacity(0.08) : TaskFlowTokens.border;
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primary,
+        brightness: brightness,
+        primary: primary,
+        secondary: isDark ? const Color(0xFFB8A37B) : const Color(0xFF8D6E63),
+        surface: surface,
+        background: background,
+        error: const Color(0xFFD46A5C),
+      ),
+      scaffoldBackgroundColor: background,
+      textTheme: Typography.blackCupertino.copyWith(
+        displayLarge: TextStyle(color: textPrimary, fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -1.0),
+        displayMedium: TextStyle(color: textPrimary, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.8),
+        headlineMedium: TextStyle(color: textPrimary, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+        titleLarge: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+        titleMedium: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(color: textPrimary, fontSize: 16, height: 1.45),
+        bodyMedium: TextStyle(color: textSecondary, fontSize: 14, height: 1.45),
+        labelLarge: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
+        labelMedium: TextStyle(color: textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: background,
+        foregroundColor: textPrimary,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: TextStyle(
+          color: textPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.8,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.black.withOpacity(0.04),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusLg),
+          side: BorderSide(color: border, width: 1),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 0,
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+          borderSide: BorderSide(color: border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+          borderSide: BorderSide(color: border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+          borderSide: BorderSide(color: primary, width: 1.8),
+        ),
+        filled: true,
+        fillColor: surfaceMuted,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primary,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          side: BorderSide(color: border),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+          ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surfaceMuted,
+        side: BorderSide(color: border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+        ),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+        ),
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primary;
+          }
+          return Colors.transparent;
+        }),
+        side: BorderSide(color: border, width: 1.6),
+      ),
+      dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
     );
   }
 }

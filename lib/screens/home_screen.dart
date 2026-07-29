@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../design/taskflow_tokens.dart';
 import '../providers/task_provider.dart';
 import '../widgets/focus_now_card.dart';
 import '../widgets/task_card.dart';
@@ -225,53 +226,42 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 76,
+        titleSpacing: 20,
         title: _isSearching
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: 'Search tasks...',
+                  hintText: 'Search tasks, notes, tags',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  isDense: true,
+                  filled: false,
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  hintStyle: textTheme.bodyMedium,
                 ),
                 onChanged: (value) {
                   context.read<TaskProvider>().searchTasks(value);
                 },
               )
-            : const Text('Tasks'),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('TaskFlow', style: textTheme.titleLarge),
+                  const SizedBox(height: 2),
+                  Text(
+                    'What should happen next?',
+                    style: textTheme.bodyMedium,
+                  ),
+                ],
+              ),
         actions: [
-          // Settings button
           IconButton(
-            icon: const Icon(Icons.settings_rounded),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
-              );
-            },
-            tooltip: 'Settings',
-          ),
-          // Theme toggle button
-          Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) {
-              final isDark = themeProvider.themeMode == ThemeMode.dark;
-              return IconButton(
-                icon: Icon(
-                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                ),
-                onPressed: () {
-                  themeProvider.toggleTheme();
-                },
-                tooltip: isDark ? 'Light Mode' : 'Dark Mode',
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search_rounded),
+            icon: const Icon(Icons.search_rounded),
             onPressed: () {
               setState(() {
                 if (_isSearching) {
@@ -288,7 +278,26 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _showFilterDialog,
             tooltip: 'Filter',
           ),
-          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_horiz_rounded),
+            onSelected: (value) {
+              if (value == 'settings') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+              } else if (value == 'theme') {
+                context.read<ThemeProvider>().toggleTheme();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'settings', child: Text('Settings')),
+              const PopupMenuItem(value: 'theme', child: Text('Toggle theme')),
+            ],
+          ),
+          const SizedBox(width: 12),
         ],
       ),
       body: Consumer<TaskProvider>(
@@ -300,147 +309,35 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           if (taskProvider.tasks.isEmpty) {
-            return Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Animated icon
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.elasticOut,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: Container(
-                              padding: const EdgeInsets.all(40),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color(0xFF6C63FF).withOpacity(0.2),
-                                    const Color(0xFFFF6584).withOpacity(0.2),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.task_alt_rounded,
-                                size: 100,
-                                color: const Color(0xFF6C63FF).withOpacity(0.8),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                      const Text(
-                        'Ready to get organized?',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Create your first task and start crushing your goals',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40),
-                      
-                      // Features list
-                      _buildFeatureItem(
-                        icon: Icons.swipe_rounded,
-                        title: 'Swipe to complete',
-                        description: 'Quick actions at your fingertips',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureItem(
-                        icon: Icons.expand_more_rounded,
-                        title: 'Tap to expand',
-                        description: 'See full details instantly',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureItem(
-                        icon: Icons.trending_up_rounded,
-                        title: 'Track progress',
-                        description: 'Watch your productivity grow',
-                      ),
-                      const SizedBox(height: 40),
-                      
-                      // CTA button
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddEditTaskScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.add_rounded),
-                        label: const Text('Create Your First Task'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+            return _EmptyState(
+              onAddTask: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddEditTaskScreen(),
                   ),
-                ),
-              ),
+                );
+              },
             );
           }
 
           return RefreshIndicator(
             onRefresh: () => taskProvider.loadTasks(),
-            color: const Color(0xFF6C63FF),
+            color: theme.colorScheme.primary,
             child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 80),
-              itemCount: taskProvider.tasks.length + 2, // +2 for focus card and statistics card
+              padding: const EdgeInsets.fromLTRB(0, 12, 0, 96),
+              itemCount: taskProvider.tasks.length + 2,
               itemBuilder: (context, index) {
-                // Focus suggestions card at the top
                 if (index == 0) {
-                  return AnimatedOpacity(
-                    opacity: 1.0,
-                    duration: const Duration(milliseconds: 350),
-                    child: const FocusNowCard(),
-                  );
+                  return const FocusNowCard();
                 }
 
-                // Statistics card below it
                 if (index == 1) {
-                  return AnimatedOpacity(
-                    opacity: 1.0,
-                    duration: const Duration(milliseconds: 500),
-                    child: const StatisticsCard(),
-                  );
+                  return const StatisticsCard();
                 }
-                
-                // Task cards with fade-in animation
+
                 final task = taskProvider.tasks[index - 2];
-                return AnimatedOpacity(
-                  opacity: 1.0,
-                  duration: Duration(milliseconds: 300 + (index * 50)),
-                  child: TaskCard(task: task),
-                );
+                return TaskCard(task: task);
               },
             ),
           );
@@ -460,51 +357,51 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
 
-  /// Build feature item for empty state
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF6C63FF).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: const Color(0xFF6C63FF),
-            size: 24,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.onAddTask});
+
+  final VoidCallback onAddTask;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  color: TaskFlowTokens.primarySoft,
+                  borderRadius: BorderRadius.circular(28),
                 ),
+                child: const Icon(Icons.task_alt_rounded, size: 42, color: TaskFlowTokens.primary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 24),
+              Text('Start with one thing', style: textTheme.displayMedium, textAlign: TextAlign.center),
+              const SizedBox(height: 10),
               Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                'Capture a task and TaskFlow will help shape the rest.',
+                style: textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              FilledButton.icon(
+                onPressed: onAddTask,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add Task'),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

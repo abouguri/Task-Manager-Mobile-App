@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../design/taskflow_tokens.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../screens/add_edit_task_screen.dart';
@@ -24,6 +25,7 @@ class _TaskCardState extends State<TaskCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     
     return Dismissible(
       key: Key(widget.task.id.toString()),
@@ -86,7 +88,7 @@ class _TaskCardState extends State<TaskCard> {
         }
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
         child: Column(
         children: [
           InkWell(
@@ -95,9 +97,9 @@ class _TaskCardState extends State<TaskCard> {
                 _isExpanded = !_isExpanded;
               });
             },
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusLg),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -111,14 +113,14 @@ class _TaskCardState extends State<TaskCard> {
                       height: 28,
                       decoration: BoxDecoration(
                         color: widget.task.isCompleted
-                            ? _getPriorityColor(widget.task.priority)
+                            ? theme.colorScheme.primary
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: widget.task.isCompleted
-                              ? _getPriorityColor(widget.task.priority)
-                              : Colors.grey.withOpacity(0.3),
-                          width: 2.5,
+                              ? theme.colorScheme.primary
+                              : theme.dividerColor,
+                          width: 1.6,
                         ),
                       ),
                       child: widget.task.isCompleted
@@ -140,37 +142,19 @@ class _TaskCardState extends State<TaskCard> {
                         // Title with priority dot
                         Row(
                           children: [
-                            // Priority dot indicator
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: _getPriorityColor(widget.task.priority),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _getPriorityColor(widget.task.priority).withOpacity(0.4),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-
                             // Title
                             Expanded(
                               child: Text(
                                 widget.task.title,
                                 style: TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   decoration: widget.task.isCompleted
                                       ? TextDecoration.lineThrough
                                       : null,
                                   color: widget.task.isCompleted
-                                      ? Colors.grey.withOpacity(0.6)
-                                      : isDark ? Colors.white : const Color(0xFF1A1A1A),
+                                      ? theme.colorScheme.outline
+                                      : isDark ? Colors.white : const Color(0xFF1B1B1D),
                                   letterSpacing: -0.3,
                                 ),
                                 maxLines: _isExpanded ? null : 2,
@@ -179,18 +163,17 @@ class _TaskCardState extends State<TaskCard> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
 
                         // Category and Due Date - Minimalist badges
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 6,
+                          runSpacing: 6,
                           children: [
                             // Category badge
                             _buildMinimalBadge(
                               icon: _getCategoryIcon(widget.task.category),
                               label: widget.task.category,
-                              color: _getCategoryColor(widget.task.category),
                               isDark: isDark,
                             ),
 
@@ -199,30 +182,27 @@ class _TaskCardState extends State<TaskCard> {
                               _buildMinimalBadge(
                                 icon: Icons.calendar_today_rounded,
                                 label: _formatDueDate(widget.task.dueDate!),
-                                color: _getDueDateColor(widget.task.dueDate!),
                                 isDark: isDark,
                               ),
 
                             _buildMinimalBadge(
                               icon: Icons.timer_rounded,
                               label: '${widget.task.effortMinutes} min',
-                              color: Colors.teal,
                               isDark: isDark,
                             ),
 
                             _buildMinimalBadge(
                               icon: Icons.bolt_rounded,
                               label: widget.task.energyLevel,
-                              color: Colors.deepOrange,
                               isDark: isDark,
                             ),
                           ],
                         ),
                         if (widget.task.tags.isNotEmpty) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
+                            spacing: 6,
+                            runSpacing: 6,
                             children: widget.task.tags
                                 .map(
                                   (tag) => Chip(
@@ -262,14 +242,14 @@ class _TaskCardState extends State<TaskCard> {
                   if (widget.task.description != null && widget.task.description!.isNotEmpty) ...[
                     Row(
                       children: [
-                        Icon(Icons.notes_rounded, size: 18, color: Colors.grey[600]),
+                        Icon(Icons.notes_outlined, size: 18, color: theme.colorScheme.outline),
                         const SizedBox(width: 8),
                         Text(
                           'Description',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
+                            color: theme.colorScheme.outline,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -280,7 +260,7 @@ class _TaskCardState extends State<TaskCard> {
                       widget.task.description!,
                       style: TextStyle(
                         fontSize: 15,
-                        color: isDark ? Colors.grey[300] : Colors.grey[800],
+                        color: isDark ? Colors.grey[300] : const Color(0xFF46423D),
                         height: 1.5,
                       ),
                     ),
@@ -290,14 +270,14 @@ class _TaskCardState extends State<TaskCard> {
                   // Priority
                   Row(
                     children: [
-                      Icon(Icons.flag_rounded, size: 18, color: Colors.grey[600]),
+                      Icon(Icons.flag_outlined, size: 18, color: theme.colorScheme.outline),
                       const SizedBox(width: 8),
                       Text(
                         'Priority',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          color: theme.colorScheme.outline,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -305,7 +285,7 @@ class _TaskCardState extends State<TaskCard> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getPriorityColor(widget.task.priority).withOpacity(0.1),
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -313,7 +293,7 @@ class _TaskCardState extends State<TaskCard> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: _getPriorityColor(widget.task.priority),
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                       ),
@@ -324,14 +304,14 @@ class _TaskCardState extends State<TaskCard> {
                   // Created date
                   Row(
                     children: [
-                      Icon(Icons.access_time_rounded, size: 18, color: Colors.grey[600]),
+                      Icon(Icons.access_time_rounded, size: 18, color: theme.colorScheme.outline),
                       const SizedBox(width: 8),
                       Text(
                         'Created',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          color: theme.colorScheme.outline,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -350,14 +330,14 @@ class _TaskCardState extends State<TaskCard> {
                   if (widget.task.tags.isNotEmpty) ...[
                     Row(
                       children: [
-                        Icon(Icons.sell_rounded, size: 18, color: Colors.grey[600]),
+                        Icon(Icons.sell_outlined, size: 18, color: theme.colorScheme.outline),
                         const SizedBox(width: 8),
                         Text(
                           'Tags',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
+                            color: theme.colorScheme.outline,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -461,25 +441,26 @@ class _TaskCardState extends State<TaskCard> {
   Widget _buildMinimalBadge({
     required IconData icon,
     required String label,
-    required Color color,
     required bool isDark,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.15 : 0.08),
+        color: isDark
+            ? Colors.white.withOpacity(0.06)
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 14, color: Theme.of(context).colorScheme.outline),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
               fontSize: 13,
-              color: color,
+              color: Theme.of(context).colorScheme.outline,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2,
             ),
@@ -536,34 +517,20 @@ class _TaskCardState extends State<TaskCard> {
   }
 
   /// Get color based on priority
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'High':
-        return const Color(0xFFFF6B6B); // Modern coral red
-      case 'Medium':
-        return const Color(0xFFFFA94D); // Warm orange
-      case 'Low':
-        return const Color(0xFF51CF66); // Fresh green
-      default:
-        return const Color(0xFF94A3B8); // Soft grey
-    }
-  }
-
-  /// Get color based on category
   Color _getCategoryColor(String category) {
     switch (category) {
       case 'Work':
-        return const Color(0xFF6C63FF); // Modern purple
+        return const Color(0xFF2F5B52);
       case 'Personal':
-        return const Color(0xFFFF6584); // Pink accent
+        return const Color(0xFF7E6A58);
       case 'Shopping':
-        return const Color(0xFF20C997); // Teal
+        return const Color(0xFF5D736E);
       case 'Health':
-        return const Color(0xFFFF8787); // Soft red
+        return const Color(0xFF8A6B54);
       case 'Other':
-        return const Color(0xFF94A3B8); // Neutral grey
+        return const Color(0xFF7C756B);
       default:
-        return const Color(0xFF94A3B8);
+        return const Color(0xFF7C756B);
     }
   }
 
@@ -605,16 +572,6 @@ class _TaskCardState extends State<TaskCard> {
 
   /// Get color based on due date
   Color _getDueDateColor(DateTime dueDate) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
-
-    if (taskDate.isBefore(today)) {
-      return const Color(0xFFFF6B6B); // Overdue - coral red
-    } else if (taskDate == today) {
-      return const Color(0xFFFFA94D); // Due today - warm orange
-    } else {
-      return const Color(0xFF748FFC); // Future date - soft blue
-    }
+    return const Color(0xFF7C756B);
   }
 }

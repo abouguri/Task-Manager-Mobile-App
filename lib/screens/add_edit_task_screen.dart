@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../design/taskflow_tokens.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 
@@ -19,6 +20,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _tagsController = TextEditingController();
+  bool _showMoreDetails = false;
   
   String _priority = 'Medium';
   String _category = 'Personal';
@@ -161,7 +163,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Task' : 'Add Task'),
+        title: Text(isEditing ? 'Edit Task' : 'New Task'),
         actions: [
           if (_isLoading)
             const Center(
@@ -182,15 +184,20 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           children: [
+            Text(
+              'Capture first, refine later.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
             // Title field
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
                 labelText: 'Title',
                 hintText: 'What needs to be done?',
-                prefixIcon: Icon(Icons.text_fields_rounded),
+                prefixIcon: Icon(Icons.edit_outlined),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               textCapitalization: TextCapitalization.sentences,
@@ -204,176 +211,169 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Description field
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Description',
-                hintText: 'Add more details... (optional)',
-                prefixIcon: Icon(Icons.notes_rounded),
+                hintText: 'Optional details',
+                prefixIcon: Icon(Icons.notes_outlined),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
                 alignLabelWithHint: true,
               ),
               maxLines: 4,
               textCapitalization: TextCapitalization.sentences,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
 
-            // Priority dropdown
-            DropdownButtonFormField<String>(
-              value: _priority,
-              decoration: const InputDecoration(
-                labelText: 'Priority',
-                prefixIcon: Icon(Icons.flag_rounded),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _showMoreDetails = !_showMoreDetails;
+                });
+              },
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_showMoreDetails ? 'Hide details' : 'More details'),
               ),
-              items: ['Low', 'Medium', 'High'].map((priority) {
-                return DropdownMenuItem(
-                  value: priority,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _getPriorityColor(priority),
-                          shape: BoxShape.circle,
+            ),
+
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: _priority,
+                    decoration: const InputDecoration(
+                      labelText: 'Priority',
+                      prefixIcon: Icon(Icons.flag_outlined),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    ),
+                    items: ['Low', 'Medium', 'High'].map((priority) {
+                      return DropdownMenuItem(
+                        value: priority,
+                        child: Text(priority),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _priority = value ?? 'Medium';
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _category,
+                    decoration: const InputDecoration(
+                      labelText: 'Project',
+                      prefixIcon: Icon(Icons.folder_outlined),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    ),
+                    items: ['Work', 'Personal', 'Shopping', 'Health', 'Other']
+                        .map((category) => DropdownMenuItem(value: category, child: Text(category)))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _category = value ?? 'Personal';
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _tagsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tags',
+                      hintText: 'home, finance, urgent',
+                      prefixIcon: Icon(Icons.sell_outlined),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int>(
+                    value: _effortMinutes,
+                    decoration: const InputDecoration(
+                      labelText: 'Duration',
+                      prefixIcon: Icon(Icons.timelapse_rounded),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 15, child: Text('15 min')),
+                      DropdownMenuItem(value: 30, child: Text('30 min')),
+                      DropdownMenuItem(value: 60, child: Text('1 hour')),
+                      DropdownMenuItem(value: 120, child: Text('2 hours')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _effortMinutes = value ?? 15;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _energyLevel,
+                    decoration: const InputDecoration(
+                      labelText: 'Energy',
+                      prefixIcon: Icon(Icons.bolt_outlined),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Deep Work', child: Text('Deep Work')),
+                      DropdownMenuItem(value: 'Quick Win', child: Text('Quick Win')),
+                      DropdownMenuItem(value: 'Flexible', child: Text('Flexible')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _energyLevel = value ?? 'Flexible';
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: _selectDate,
+                    borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Due Date',
+                        hintText: 'Optional',
+                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                        floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      ),
+                      child: Text(
+                        _dueDate != null
+                            ? DateFormat('EEE, MMM d').format(_dueDate!)
+                            : 'No due date',
+                        style: TextStyle(
+                          color: _dueDate != null ? null : Theme.of(context).colorScheme.outline,
+                          fontWeight: _dueDate != null ? FontWeight.w500 : FontWeight.normal,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(priority),
-                    ],
+                    ),
                   ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _priority = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Category dropdown
-            DropdownButtonFormField<String>(
-              value: _category,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                prefixIcon: Icon(Icons.label_rounded),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                  if (_dueDate != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _dueDate = null;
+                          });
+                        },
+                        child: const Text('Clear due date'),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              items: ['Work', 'Personal', 'Shopping', 'Health', 'Other']
-                  .map((category) {
-                return DropdownMenuItem(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _category = value!;
-                });
-              },
+              crossFadeState: _showMoreDetails ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 220),
             ),
-            const SizedBox(height: 24),
 
-            // Tags field
-            TextFormField(
-              controller: _tagsController,
-              decoration: const InputDecoration(
-                labelText: 'Tags',
-                hintText: 'home, finance, urgent',
-                prefixIcon: Icon(Icons.tag_rounded),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-              ),
-              textCapitalization: TextCapitalization.words,
-            ),
-            const SizedBox(height: 24),
-
-            // Effort estimate
-            DropdownButtonFormField<int>(
-              value: _effortMinutes,
-              decoration: const InputDecoration(
-                labelText: 'Effort Estimate',
-                prefixIcon: Icon(Icons.timer_rounded),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-              ),
-              items: const [
-                DropdownMenuItem(value: 15, child: Text('15 min')),
-                DropdownMenuItem(value: 30, child: Text('30 min')),
-                DropdownMenuItem(value: 60, child: Text('1 hour')),
-                DropdownMenuItem(value: 120, child: Text('2 hours')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _effortMinutes = value ?? 15;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Energy level
-            DropdownButtonFormField<String>(
-              value: _energyLevel,
-              decoration: const InputDecoration(
-                labelText: 'Energy Level',
-                prefixIcon: Icon(Icons.bolt_rounded),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Deep Work', child: Text('Deep Work')),
-                DropdownMenuItem(value: 'Quick Win', child: Text('Quick Win')),
-                DropdownMenuItem(value: 'Flexible', child: Text('Flexible')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _energyLevel = value ?? 'Flexible';
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Due date picker
-            InkWell(
-              onTap: _selectDate,
-              borderRadius: BorderRadius.circular(16),
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Due Date',
-                  hintText: 'Select a due date (optional)',
-                  prefixIcon: Icon(Icons.calendar_today_rounded),
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
-                ),
-                child: Text(
-                  _dueDate != null
-                      ? DateFormat('EEEE, MMM dd, yyyy').format(_dueDate!)
-                      : 'No due date set',
-                  style: TextStyle(
-                    color: _dueDate != null ? null : Colors.grey[600],
-                    fontWeight: _dueDate != null ? FontWeight.w500 : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Clear due date button (if date is set)
-            if (_dueDate != null)
-              OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _dueDate = null;
-                  });
-                },
-                icon: const Icon(Icons.close_rounded, size: 18),
-                label: const Text('Clear Due Date'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                ),
-              ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
 
             // Save button
             SizedBox(
@@ -436,25 +436,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                   ),
                 ),
               ),
-            ),
+            const SizedBox(height: 8),
             const SizedBox(height: 24),
           ],
         ),
       ),
     );
-  }
-
-  /// Get color for priority indicator
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'High':
-        return Colors.red;
-      case 'Medium':
-        return Colors.orange;
-      case 'Low':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
   }
 }

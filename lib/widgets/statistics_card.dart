@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../design/taskflow_tokens.dart';
 import '../providers/task_provider.dart';
 
 /// Widget displaying task completion statistics
@@ -11,7 +12,7 @@ class StatisticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     
     final allTasks = taskProvider.tasks;
     final completedTasks = allTasks.where((task) => task.isCompleted).length;
@@ -74,52 +75,34 @@ class StatisticsCard extends StatelessWidget {
     });
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark 
-              ? [const Color(0xFF6C63FF), const Color(0xFF5848D4)]
-              : [const Color(0xFF6C63FF), const Color(0xFF8B7FFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6C63FF).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(TaskFlowTokens.radiusLg),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: theme.colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.trending_up_rounded,
-                  color: Colors.white,
-                  size: 24,
+                  color: TaskFlowTokens.primary,
+                  size: 22,
                 ),
               ),
               const SizedBox(width: 16),
-              const Text(
+              Text(
                 'Your Progress',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
+                style: theme.textTheme.titleLarge,
               ),
             ],
           ),
@@ -151,6 +134,7 @@ class StatisticsCard extends StatelessWidget {
                   icon: Icons.check_circle_rounded,
                   label: 'Completed Today',
                   value: completedToday.toString(),
+                      context: context,
                 ),
               ),
               const SizedBox(width: 16),
@@ -159,6 +143,7 @@ class StatisticsCard extends StatelessWidget {
                   icon: Icons.event_rounded,
                   label: 'Due Today',
                   value: dueToday.toString(),
+                      context: context,
                 ),
               ),
             ],
@@ -169,13 +154,9 @@ class StatisticsCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Completion Trend',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.textTheme.labelLarge,
               ),
               const SizedBox(height: 12),
               Row(
@@ -194,8 +175,8 @@ class StatisticsCard extends StatelessWidget {
                             height: height,
                             decoration: BoxDecoration(
                               color: isTodayColumn
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.55),
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.primary.withOpacity(0.35),
                               borderRadius: BorderRadius.circular(999),
                             ),
                           ),
@@ -203,7 +184,7 @@ class StatisticsCard extends StatelessWidget {
                           Text(
                             _weekdayLabel(dayIndex: entry.key),
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: theme.colorScheme.outline,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -222,12 +203,12 @@ class StatisticsCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(16),
+              color: theme.colorScheme.primary.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
             ),
             child: Row(
               children: [
-                const Icon(Icons.emoji_events_rounded, color: Colors.white),
+                const Icon(Icons.emoji_events_rounded, color: TaskFlowTokens.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -235,7 +216,7 @@ class StatisticsCard extends StatelessWidget {
                         ? 'Daily challenge unlocked: keep your streak alive.'
                         : 'Daily challenge: complete 3 tasks today for a bonus.',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.92),
+                      color: theme.colorScheme.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -256,7 +237,7 @@ class StatisticsCard extends StatelessWidget {
                   const Text(
                     'Completion Rate',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: TaskFlowTokens.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -264,7 +245,7 @@ class StatisticsCard extends StatelessWidget {
                   Text(
                     '$completionRate%',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: TaskFlowTokens.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -276,8 +257,8 @@ class StatisticsCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: LinearProgressIndicator(
                   value: completionRate / 100,
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  valueColor: const AlwaysStoppedAnimation<Color>(TaskFlowTokens.primary),
                   minHeight: 8,
                 ),
               ),
@@ -285,7 +266,7 @@ class StatisticsCard extends StatelessWidget {
               Text(
                 '$completedTasks of $totalTasks tasks completed',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: theme.colorScheme.outline,
                   fontSize: 13,
                 ),
               ),
@@ -300,22 +281,23 @@ class StatisticsCard extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    required BuildContext context,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.white, size: 28),
+          Icon(icon, color: TaskFlowTokens.primary, size: 28),
           const SizedBox(height: 12),
           Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
+              color: TaskFlowTokens.textPrimary,
               fontSize: 28,
               fontWeight: FontWeight.bold,
               letterSpacing: -1,
@@ -325,7 +307,7 @@ class StatisticsCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Theme.of(context).colorScheme.outline,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

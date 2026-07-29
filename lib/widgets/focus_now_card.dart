@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../design/taskflow_tokens.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../screens/task_detail_screen.dart';
@@ -19,22 +20,13 @@ class FocusNowCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E1E1E)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(TaskFlowTokens.radiusLg),
         border: Border.all(
-          color: const Color(0xFF6C63FF).withOpacity(0.15),
+          color: Theme.of(context).dividerColor,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,32 +36,28 @@ class FocusNowCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.bolt_rounded,
-                  color: Color(0xFF6C63FF),
+                  color: TaskFlowTokens.primary,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
+                  Expanded(
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Focus Now',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    SizedBox(height: 2),
+                        const SizedBox(height: 2),
                     Text(
                       'Best next tasks based on urgency and effort',
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -93,10 +81,8 @@ class FocusNowCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withOpacity(0.04)
-                        : const Color(0xFFF7F7FB),
-                    borderRadius: BorderRadius.circular(18),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,10 +114,7 @@ class FocusNowCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               suggestion.reason,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
                         ),
@@ -163,10 +146,10 @@ class FocusNowCard extends StatelessWidget {
     return incompleteTasks.take(3).map((task) {
       final score = _score(task, today);
       final accent = score >= 80
-          ? const Color(0xFFFF6B6B)
+          ? TaskFlowTokens.danger
           : score >= 50
-              ? const Color(0xFFFFB020)
-              : const Color(0xFF6C63FF);
+            ? TaskFlowTokens.warning
+            : TaskFlowTokens.primary;
       return _SuggestedTask(
         task: task,
         reason: _reasonFor(task, today),
