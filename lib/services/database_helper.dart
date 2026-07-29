@@ -19,7 +19,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
-  static const int _databaseVersion = 5;
+  static const int _databaseVersion = 6;
   static const String _tableName = 'tasks';
 
   /// Get database instance (create if doesn't exist)
@@ -65,6 +65,7 @@ class DatabaseHelper {
         deadline TEXT,
         projectId TEXT,
         areaId TEXT,
+        recurrence TEXT,
         isCompleted INTEGER NOT NULL DEFAULT 0,
         completedAt TEXT,
         createdAt TEXT NOT NULL
@@ -96,6 +97,9 @@ class DatabaseHelper {
     if (oldVersion < 5) {
       await db.execute(
           "ALTER TABLE $_tableName ADD COLUMN checklist TEXT NOT NULL DEFAULT '[]'");
+    }
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN recurrence TEXT');
     }
   }
 

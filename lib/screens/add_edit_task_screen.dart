@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
+import '../services/natural_language_schedule.dart';
 
 /// A quiet capture sheet: write first, decide where it belongs second.
 class AddEditTaskScreen extends StatefulWidget {
@@ -40,15 +41,17 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   }
 
   Future<void> _save() async {
-    final value = _title.text.trim();
+    final parsed = NaturalLanguageSchedule.parse(_title.text);
+    final value = parsed.title;
     if (value.isEmpty) return;
     final task = Task(
         id: widget.task?.id,
         title: value,
         description: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
         checklist: _checklist,
-        when: _when,
-        scheduledFor: _date,
+        when: _when == TaskWhen.inbox ? parsed.when : _when,
+        scheduledFor: _date ?? parsed.date,
+        recurrence: widget.task?.recurrence ?? parsed.recurrence,
         isCompleted: widget.task?.isCompleted ?? false,
         completedAt: widget.task?.completedAt,
         createdAt: widget.task?.createdAt);

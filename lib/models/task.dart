@@ -27,6 +27,7 @@ class Task {
   final DateTime? deadline;
   final String? projectId;
   final String? areaId;
+  final String? recurrence;
   final bool isCompleted;
   final DateTime? completedAt;
   final DateTime createdAt;
@@ -42,6 +43,7 @@ class Task {
     this.deadline,
     this.projectId,
     this.areaId,
+    this.recurrence,
     this.isCompleted = false,
     this.completedAt,
     DateTime? createdAt,
@@ -72,6 +74,7 @@ class Task {
         'deadline': deadline?.toIso8601String(),
         'projectId': projectId,
         'areaId': areaId,
+        'recurrence': recurrence,
         'isCompleted': isCompleted ? 1 : 0,
         'completedAt': completedAt?.toIso8601String(),
         'createdAt': createdAt.toIso8601String(),
@@ -94,6 +97,7 @@ class Task {
       projectId: map['projectId'] as String? ??
           _legacyProject(map['category'] as String?),
       areaId: map['areaId'] as String?,
+      recurrence: map['recurrence'] as String?,
       isCompleted: map['isCompleted'] == 1 || map['isCompleted'] == true,
       completedAt: map['completedAt'] == null
           ? null
@@ -116,6 +120,7 @@ class Task {
     bool clearDeadline = false,
     String? projectId,
     String? areaId,
+    String? recurrence,
     bool? isCompleted,
     DateTime? completedAt,
     bool clearCompletedAt = false,
@@ -133,6 +138,7 @@ class Task {
         deadline: clearDeadline ? null : deadline ?? this.deadline,
         projectId: projectId ?? this.projectId,
         areaId: areaId ?? this.areaId,
+        recurrence: recurrence ?? this.recurrence,
         isCompleted: isCompleted ?? this.isCompleted,
         completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
         createdAt: createdAt ?? this.createdAt,

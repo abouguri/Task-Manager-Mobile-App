@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
+import '../services/natural_language_schedule.dart';
 import 'add_edit_task_screen.dart';
 
 enum _View { inbox, today, upcoming, anytime, someday, logbook }
@@ -302,7 +303,13 @@ class _QuickCaptureDialogState extends State<_QuickCaptureDialog> {
   Future<void> _save() async {
     final title = _title.text.trim();
     if (title.isEmpty) return;
-    await context.read<TaskProvider>().addTask(Task(title: title, when: _when));
+    final parsed = NaturalLanguageSchedule.parse(title);
+    await context.read<TaskProvider>().addTask(Task(
+          title: parsed.title.isEmpty ? title : parsed.title,
+          when: _when == TaskWhen.inbox ? parsed.when : _when,
+          scheduledFor: _when == TaskWhen.inbox ? parsed.date : null,
+          recurrence: _when == TaskWhen.inbox ? parsed.recurrence : null,
+        ));
     if (mounted) Navigator.pop(context);
   }
 
