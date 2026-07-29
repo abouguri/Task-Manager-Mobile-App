@@ -12,14 +12,14 @@ class DatabaseHelper {
 
   // Database instance
   static Database? _database;
-  
+
   // In-memory storage for web platform
   static final List<Task> _webStorage = [];
   static int _webNextId = 1;
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
   static const String _tableName = 'tasks';
 
   /// Get database instance (create if doesn't exist)
@@ -36,7 +36,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     // Get the path to the database
     String path = join(await getDatabasesPath(), _databaseName);
-    
+
     // Open the database
     return await openDatabase(
       path,
@@ -56,6 +56,7 @@ class DatabaseHelper {
         priority TEXT NOT NULL DEFAULT 'None',
         category TEXT NOT NULL DEFAULT 'Inbox',
         tags TEXT NOT NULL DEFAULT '',
+        checklist TEXT NOT NULL DEFAULT '[]',
         effortMinutes INTEGER NOT NULL DEFAULT 0,
         energyLevel TEXT NOT NULL DEFAULT 'Flexible',
         dueDate TEXT,
@@ -74,18 +75,27 @@ class DatabaseHelper {
   /// Handle database upgrade
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 3) {
-      await db.execute('ALTER TABLE $_tableName ADD COLUMN tags TEXT NOT NULL DEFAULT ""');
-      await db.execute('ALTER TABLE $_tableName ADD COLUMN effortMinutes INTEGER NOT NULL DEFAULT 15');
-      await db.execute('ALTER TABLE $_tableName ADD COLUMN energyLevel TEXT NOT NULL DEFAULT "Flexible"');
+      await db.execute(
+          'ALTER TABLE $_tableName ADD COLUMN tags TEXT NOT NULL DEFAULT ""');
+      await db.execute(
+          'ALTER TABLE $_tableName ADD COLUMN effortMinutes INTEGER NOT NULL DEFAULT 15');
+      await db.execute(
+          'ALTER TABLE $_tableName ADD COLUMN energyLevel TEXT NOT NULL DEFAULT "Flexible"');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN completedAt TEXT');
     }
     if (oldVersion < 4) {
-      await db.execute("ALTER TABLE $_tableName ADD COLUMN whenValue TEXT NOT NULL DEFAULT 'inbox'");
+      await db.execute(
+          "ALTER TABLE $_tableName ADD COLUMN whenValue TEXT NOT NULL DEFAULT 'inbox'");
       await db.execute('ALTER TABLE $_tableName ADD COLUMN scheduledFor TEXT');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN deadline TEXT');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN projectId TEXT');
       await db.execute('ALTER TABLE $_tableName ADD COLUMN areaId TEXT');
-      await db.execute("UPDATE $_tableName SET scheduledFor = dueDate, whenValue = CASE WHEN dueDate IS NULL THEN 'inbox' ELSE 'date' END");
+      await db.execute(
+          "UPDATE $_tableName SET scheduledFor = dueDate, whenValue = CASE WHEN dueDate IS NULL THEN 'inbox' ELSE 'date' END");
+    }
+    if (oldVersion < 5) {
+      await db.execute(
+          "ALTER TABLE $_tableName ADD COLUMN checklist TEXT NOT NULL DEFAULT '[]'");
     }
   }
 
@@ -98,7 +108,7 @@ class DatabaseHelper {
         _webStorage.add(newTask);
         return newTask.id!;
       }
-      
+
       final db = await database;
       return await db.insert(
         _tableName,
@@ -122,7 +132,7 @@ class DatabaseHelper {
         }
         return 0;
       }
-      
+
       final db = await database;
       return await db.update(
         _tableName,
@@ -144,7 +154,7 @@ class DatabaseHelper {
         _webStorage.removeWhere((task) => task.id == id);
         return initialLength - _webStorage.length;
       }
-      
+
       final db = await database;
       return await db.delete(
         _tableName,
@@ -174,7 +184,7 @@ class DatabaseHelper {
         });
         return sortedTasks;
       }
-      
+
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -200,7 +210,7 @@ class DatabaseHelper {
           return null;
         }
       }
-      
+
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -220,9 +230,11 @@ class DatabaseHelper {
   Future<List<Task>> getTasksByStatus(bool isCompleted) async {
     try {
       if (kIsWeb) {
-        return _webStorage.where((task) => task.isCompleted == isCompleted).toList();
+        return _webStorage
+            .where((task) => task.isCompleted == isCompleted)
+            .toList();
       }
-      
+
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -245,7 +257,7 @@ class DatabaseHelper {
       if (kIsWeb) {
         return _webStorage.where((task) => task.priority == priority).toList();
       }
-      
+
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -268,7 +280,7 @@ class DatabaseHelper {
       if (kIsWeb) {
         return _webStorage.where((task) => task.category == category).toList();
       }
-      
+
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -291,10 +303,11 @@ class DatabaseHelper {
       if (kIsWeb) {
         return _webStorage.where((task) {
           return task.title.toLowerCase().contains(query.toLowerCase()) ||
-              (task.description?.toLowerCase().contains(query.toLowerCase()) ?? false);
+              (task.description?.toLowerCase().contains(query.toLowerCase()) ??
+                  false);
         }).toList();
       }
-      
+
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
@@ -319,7 +332,7 @@ class DatabaseHelper {
         _webNextId = 1;
         return;
       }
-      
+
       final db = await database;
       await db.delete(_tableName);
     } catch (e) {
@@ -333,7 +346,7 @@ class DatabaseHelper {
       // No need to close anything on web
       return;
     }
-    
+
     final db = await database;
     await db.close();
     _database = null;
