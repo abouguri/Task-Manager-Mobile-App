@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/organization.dart';
 import '../providers/task_provider.dart';
+import 'project_detail_screen.dart';
 
 class OrganizationScreen extends StatelessWidget {
   final bool projects;
@@ -52,4 +53,25 @@ class OrganizationScreen extends StatelessWidget {
 }
 class _AreaLabel extends StatelessWidget { const _AreaLabel({required this.area}); final Area area; @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(top: 18, bottom: 6), child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: Color(area.accentColor), shape: BoxShape.circle)), const SizedBox(width: 8), Text(area.title, style: Theme.of(context).textTheme.labelLarge)])); }
 class _AreaRow extends StatelessWidget { const _AreaRow({required this.area, required this.projectCount}); final Area area; final int projectCount; @override Widget build(BuildContext context) => ListTile(contentPadding: EdgeInsets.zero, leading: Container(width: 10, height: 10, decoration: BoxDecoration(color: Color(area.accentColor), shape: BoxShape.circle)), title: Text(area.title), trailing: Text('$projectCount', style: Theme.of(context).textTheme.bodyMedium)); }
-class _ProjectRow extends StatelessWidget { const _ProjectRow({required this.project}); final Project project; @override Widget build(BuildContext context) => ListTile(contentPadding: EdgeInsets.zero, leading: Checkbox(value: project.isCompleted, onChanged: (_) => context.read<TaskProvider>().toggleProject(project)), title: Text(project.title, style: TextStyle(decoration: project.isCompleted ? TextDecoration.lineThrough : null)), onTap: () => context.read<TaskProvider>().toggleProject(project)); }
+class _ProjectRow extends StatelessWidget {
+  const _ProjectRow({required this.project});
+
+  final Project project;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Checkbox(
+          value: project.isCompleted,
+          onChanged: (_) => context.read<TaskProvider>().toggleProject(project),
+        ),
+        title: Text(
+          project.title,
+          style: TextStyle(decoration: project.isCompleted ? TextDecoration.lineThrough : null),
+        ),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ProjectDetailScreen(project: project)),
+        ),
+      );
+}
