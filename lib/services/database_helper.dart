@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/task.dart';
+import '../models/organization.dart';
 
 /// Singleton class to manage SQLite database operations
 class DatabaseHelper {
@@ -16,11 +17,17 @@ class DatabaseHelper {
   // In-memory storage for web platform
   static final List<Task> _webStorage = [];
   static int _webNextId = 1;
+  static final List<Area> _webAreas = [];
+  static final List<Project> _webProjects = [];
+  static int _webNextAreaId = 1;
+  static int _webNextProjectId = 1;
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
-  static const int _databaseVersion = 6;
+  static const int _databaseVersion = 7;
   static const String _tableName = 'tasks';
+  static const String _areasTable = 'areas';
+  static const String _projectsTable = 'projects';
 
   /// Get database instance (create if doesn't exist)
   Future<Database> get database async {
@@ -71,6 +78,12 @@ class DatabaseHelper {
         createdAt TEXT NOT NULL
       )
     ''');
+    await _createOrganizationTables(db);
+  }
+
+  Future<void> _createOrganizationTables(Database db) async {
+    await db.execute('CREATE TABLE IF NOT EXISTS $_areasTable (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, accentColor INTEGER NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS $_projectsTable (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, areaId INTEGER, isCompleted INTEGER NOT NULL DEFAULT 0)');
   }
 
   /// Handle database upgrade
@@ -101,7 +114,17 @@ class DatabaseHelper {
     if (oldVersion < 6) {
       await db.execute('ALTER TABLE $_tableName ADD COLUMN recurrence TEXT');
     }
+    if (oldVersion < 7) await _createOrganizationTables(db);
   }
+
+  Future<List<Area>> getAreas() async { if (kIsWeb) return List.of(_webAreas); final db = await database; return (await db.query(_areasTable, orderBy: 'title COLLATE NOCASE')).map(Area.fromMap).toList(); }
+  Future<int> insertArea(Area area) async { if (kIsWeb) { final id = _webNextAreaId++; _webAreas.add(area.copyWith(id: id)); return id; } final db = await database; return db.insert(_areasTable, area.toMap()); }
+  Future<int> updateArea(Area area) async { if (kIsWeb) { final index = _webAreas.indexWhere((item) => item.id == area.id); if (index < 0) return 0; _webAreas[index] = area; return 1; } final db = await database; return db.update(_areasTable, area.toMap(), where: 'id = ?', whereArgs: [area.id]); }
+  Future<int> deleteArea(int id) async { if (kIsWeb) { _webAreas.removeWhere((item) => item.id == id); return 1; } final db = await database; return db.delete(_areasTable, where: 'id = ?', whereArgs: [id]); }
+  Future<List<Project>> getProjects() async { if (kIsWeb) return List.of(_webProjects); final db = await database; return (await db.query(_projectsTable, orderBy: 'isCompleted ASC, title COLLATE NOCASE')).map(Project.fromMap).toList(); }
+  Future<int> insertProject(Project project) async { if (kIsWeb) { final id = _webNextProjectId++; _webProjects.add(project.copyWith(id: id)); return id; } final db = await database; return db.insert(_projectsTable, project.toMap()); }
+  Future<int> updateProject(Project project) async { if (kIsWeb) { final index = _webProjects.indexWhere((item) => item.id == project.id); if (index < 0) return 0; _webProjects[index] = project; return 1; } final db = await database; return db.update(_projectsTable, project.toMap(), where: 'id = ?', whereArgs: [project.id]); }
+  Future<int> deleteProject(int id) async { if (kIsWeb) { _webProjects.removeWhere((item) => item.id == id); return 1; } final db = await database; return db.delete(_projectsTable, where: 'id = ?', whereArgs: [id]); }
 
   /// Insert a new task into the database
   Future<int> insertTask(Task task) async {

@@ -19,6 +19,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   TaskWhen _when = TaskWhen.inbox;
   DateTime? _date;
   List<ChecklistItem> _checklist = [];
+  int? _selectedAreaId;
+  int? _selectedProjectId;
   @override
   void initState() {
     super.initState();
@@ -29,6 +31,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       _when = task.when;
       _date = task.scheduledFor;
       _checklist = List.of(task.checklist);
+      _selectedAreaId = int.tryParse(task.areaId ?? '');
+      _selectedProjectId = int.tryParse(task.projectId ?? '');
     }
   }
 
@@ -51,6 +55,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         checklist: _checklist,
         when: _when == TaskWhen.inbox ? parsed.when : _when,
         scheduledFor: _date ?? parsed.date,
+        projectId: _selectedProjectId?.toString(),
+        areaId: _selectedAreaId?.toString(),
         recurrence: widget.task?.recurrence ?? parsed.recurrence,
         isCompleted: widget.task?.isCompleted ?? false,
         completedAt: widget.task?.completedAt,
@@ -66,15 +72,25 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        
         appBar: AppBar(
             leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context)),
             actions: [TextButton(onPressed: _save, child: const Text('Done'))]),
-        body: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      body: Consumer<TaskProvider>(
+        builder: (context, tasks, child) {
+        final availableProjects = _selectedAreaId == null
+          ? tasks.projects
+          : tasks.projects
+            .where((project) =>
+              project.areaId == _selectedAreaId || project.areaId == null)
+            .toList();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
                   widget.task == null
                       ? 'What needs your attention?'
@@ -132,6 +148,70 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                     tooltip: 'Add checklist item',
                     onPressed: _addChecklistItem)
               ]),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int?>(
+                value: _selectedAreaId,
+                decoration: const InputDecoration(
+                  labelText: 'Area (optional)',
+                  prefixIcon: Icon(Icons.circle_outlined, size: 18),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('No area'),
+                  ),
+                  ...tasks.areas.map(
+                    (area) => DropdownMenuItem<int?>(
+                      value: area.id,
+                      child: Text(area.title),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedAreaId = value;
+                    final selectedProject = tasks.projectById(_selectedProjectId);
+                    if (selectedProject != null &&
+                        selectedProject.areaId != null &&
+                        selectedProject.areaId != _selectedAreaId) {
+                      _selectedProjectId = null;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int?>(
+                value: _selectedProjectId,
+                decoration: const InputDecoration(
+                  labelText: 'Project (optional)',
+                  prefixIcon: Icon(Icons.folder_outlined, size: 18),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('No project'),
+                  ),
+                  ...availableProjects.map(
+                    (project) => DropdownMenuItem<int?>(
+                      value: project.id,
+                      child: Text(
+                        project.areaId == null
+                            ? project.title
+                            : '${tasks.areaById(project.areaId)?.title ?? 'Area'} • ${project.title}',
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProjectId = value;
+                    final selectedProject = tasks.projectById(value);
+                    if (selectedProject != null) {
+                      _selectedAreaId = selectedProject.areaId ?? _selectedAreaId;
+                    }
+                  });
+                },
+              ),
               Wrap(spacing: 8, runSpacing: 8, children: [
                 _whenChip(TaskWhen.inbox, 'Inbox'),
                 _whenChip(TaskWhen.today, 'Today'),
@@ -157,7 +237,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                     }),
               ]),
               const SizedBox(height: 16),
-            ])),
+            ]));
+          },
+        ),
       );
   void _addChecklistItem() {
     final value = _checklistItem.text.trim();

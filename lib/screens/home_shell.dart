@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../services/natural_language_schedule.dart';
+import 'organization_screen.dart';
 import 'add_edit_task_screen.dart';
 
 enum _View { inbox, today, upcoming, anytime, someday, logbook }
+enum _ManageView { areas, projects }
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -110,7 +112,32 @@ class _HomeShellState extends State<HomeShell> {
                 decoration: const InputDecoration(
                     hintText: 'Search',
                     prefixIcon: Icon(Icons.search),
-                    isDense: true)))
+                    isDense: true))),
+        const SizedBox(width: 8),
+        PopupMenuButton<_ManageView>(
+          tooltip: 'Manage areas and projects',
+          icon: const Icon(Icons.dashboard_outlined),
+          onSelected: (value) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OrganizationScreen(
+                  projects: value == _ManageView.projects,
+                ),
+              ),
+            );
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: _ManageView.areas,
+              child: Text('Areas'),
+            ),
+            PopupMenuItem(
+              value: _ManageView.projects,
+              child: Text('Projects'),
+            ),
+          ],
+        )
       ]));
   String get _title => [
         'Inbox',
@@ -185,70 +212,140 @@ class _TaskRow extends StatelessWidget {
   const _TaskRow({required this.task});
   final Task task;
   @override
-  Widget build(BuildContext context) => Dismissible(
+  Widget build(BuildContext context) {
+    final provider = context.read<TaskProvider>();
+    final area = provider.areaById(int.tryParse(task.areaId ?? ''));
+    final project = provider.projectById(int.tryParse(task.projectId ?? ''));
+    final labels = <String>[
+      if (area != null) area.title,
+      if (project != null) project.title,
+    ];
+
+    return Dismissible(
       key: ValueKey(task.id),
-      direction: task.isCompleted
-          ? DismissDirection.none
-          : DismissDirection.startToEnd,
+      direction:
+          task.isCompleted ? DismissDirection.none : DismissDirection.startToEnd,
       background: Container(
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.only(left: 18),
-          color: Theme.of(context).colorScheme.primary,
-          child: const Icon(Icons.check, color: Colors.white)),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 18),
+        color: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.check, color: Colors.white),
+      ),
       confirmDismiss: (_) async {
-        await context.read<TaskProvider>().toggleTaskCompletion(task);
+        await provider.toggleTaskCompletion(task);
         return false;
       },
       child: InkWell(
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => AddEditTaskScreen(task: task))),
-          child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(children: [
-                GestureDetector(
-                    onTap: () =>
-                        context.read<TaskProvider>().toggleTaskCompletion(task),
-                    child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: task.isCompleted
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.transparent,
-                            border: Border.all(
-                                color: Theme.of(context).dividerColor,
-                                width: 1.5)),
-                        child: task.isCompleted
-                            ? const Icon(Icons.check,
-                                size: 15, color: Colors.white)
-                            : null)),
-                const SizedBox(width: 14),
-                Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      Text(task.title,
-                          style: TextStyle(
-                              fontSize: 16,
-                              decoration: task.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: task.isCompleted
-                                  ? Theme.of(context).colorScheme.outline
-                                  : null)),
-                      if (task.description != null)
-                        Padding(
-                            padding: const EdgeInsets.only(top: 3),
-                            child: Text(task.description!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium))
-                    ])),
-                if (task.when == TaskWhen.evening)
-                  const Icon(Icons.nights_stay_outlined, size: 17)
-              ]))));
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => AddEditTaskScreen(task: task)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => provider.toggleTaskCompletion(task),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: task.isCompleted
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: task.isCompleted
+                      ? const Icon(Icons.check, size: 15, color: Colors.white)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: task.isCompleted
+                            ? Theme.of(context).colorScheme.outline
+                            : null,
+                      ),
+                    ),
+                    if (task.description != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
+                          task.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    if (labels.isNotEmpty || task.when == TaskWhen.evening)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            for (final label in labels)
+                              _LabelPill(text: label),
+                            if (task.when == TaskWhen.evening)
+                              const _LabelPill(
+                                text: 'Evening',
+                                icon: Icons.nights_stay_outlined,
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LabelPill extends StatelessWidget {
+  const _LabelPill({required this.text, this.icon});
+
+  final String text;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12),
+            const SizedBox(width: 4),
+          ],
+          Text(text, style: Theme.of(context).textTheme.labelMedium),
+        ],
+      ),
+    );
+  }
 }
 
 class _Empty extends StatelessWidget {

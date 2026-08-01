@@ -110,11 +110,31 @@ class TaskDetailScreen extends StatelessWidget {
                   ),
                 const SizedBox(height: 20),
 
+                if (task.areaId != null || task.projectId != null) ...[
+                  _DetailSection(
+                    title: 'Organization',
+                    child: Column(
+                      children: [
+                        if (task.areaId != null)
+                          _DetailRow(
+                            label: 'Area',
+                            value: taskProvider.areaById(int.tryParse(task.areaId ?? ''))?.title ?? task.areaId!,
+                          ),
+                        if (task.projectId != null)
+                          _DetailRow(
+                            label: 'Project',
+                            value: taskProvider.projectById(int.tryParse(task.projectId ?? ''))?.title ?? task.projectId!,
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 _DetailSection(
                   title: 'Overview',
                   child: Column(
                     children: [
-                      _DetailRow(label: 'Project', value: task.category),
                       _DetailRow(label: 'Priority', value: task.priority),
                       _DetailRow(label: 'Duration', value: '${task.effortMinutes} min'),
                       _DetailRow(label: 'Energy', value: task.energyLevel),

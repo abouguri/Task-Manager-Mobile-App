@@ -1,15 +1,20 @@
 import 'package:flutter/foundation.dart';
 import '../models/task.dart';
+import '../models/organization.dart';
 import '../services/database_helper.dart';
 import '../services/natural_language_schedule.dart';
 
 class TaskProvider with ChangeNotifier {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Task> _tasks = [];
+  List<Area> _areas = [];
+  List<Project> _projects = [];
   bool _isLoading = false;
   String _searchQuery = '';
 
   List<Task> get allTasks => List.unmodifiable(_tasks);
+  List<Area> get areas => List.unmodifiable(_areas);
+  List<Project> get projects => List.unmodifiable(_projects);
   List<Task> get tasks => _visible(_tasks);
   bool get isLoading => _isLoading;
   String get searchQuery => _searchQuery;
@@ -39,6 +44,8 @@ class TaskProvider with ChangeNotifier {
     notifyListeners();
     try {
       _tasks = await _dbHelper.getAllTasks();
+      _areas = await _dbHelper.getAreas();
+      _projects = await _dbHelper.getProjects();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -107,4 +114,22 @@ class TaskProvider with ChangeNotifier {
   }
 
   void clearFilters() => searchTasks('');
+  Future<void> addArea(Area area) async { final id = await _dbHelper.insertArea(area); _areas.add(area.copyWith(id: id)); _areas.sort((a, b) => a.title.compareTo(b.title)); notifyListeners(); }
+  Future<void> updateArea(Area area) async { await _dbHelper.updateArea(area); final index = _areas.indexWhere((item) => item.id == area.id); if (index >= 0) _areas[index] = area; notifyListeners(); }
+  Future<void> addProject(Project project) async { final id = await _dbHelper.insertProject(project); _projects.add(project.copyWith(id: id)); _projects.sort((a, b) => a.title.compareTo(b.title)); notifyListeners(); }
+  Future<void> toggleProject(Project project) async { final updated = project.copyWith(isCompleted: !project.isCompleted); await _dbHelper.updateProject(updated); final index = _projects.indexWhere((item) => item.id == project.id); if (index >= 0) _projects[index] = updated; notifyListeners(); }
+
+  Area? areaById(int? id) {
+    for (final area in _areas) {
+      if (area.id == id) return area;
+    }
+    return null;
+  }
+
+  Project? projectById(int? id) {
+    for (final project in _projects) {
+      if (project.id == id) return project;
+    }
+    return null;
+  }
 }

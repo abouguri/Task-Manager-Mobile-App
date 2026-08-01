@@ -26,6 +26,10 @@ class _TaskCardState extends State<TaskCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+    final provider = context.read<TaskProvider>();
+    final area = provider.areaById(int.tryParse(widget.task.areaId ?? ''));
+    final project = provider.projectById(int.tryParse(widget.task.projectId ?? ''));
+    final organizationLabel = project?.title ?? area?.title ?? widget.task.category;
     
     return Dismissible(
       key: Key(widget.task.id.toString()),
@@ -172,8 +176,8 @@ class _TaskCardState extends State<TaskCard> {
                           children: [
                             // Category badge
                             _buildMinimalBadge(
-                              icon: _getCategoryIcon(widget.task.category),
-                              label: widget.task.category,
+                              icon: _getCategoryIcon(organizationLabel),
+                              label: organizationLabel,
                               isDark: isDark,
                             ),
 
