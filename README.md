@@ -1,22 +1,19 @@
 # TaskFlow
 
-TaskFlow is a mobile productivity app focused on smart task planning, fast capture, and clear daily execution.
+TaskFlow is a calm, cross-platform task manager built for fast capture, clear planning, and focused daily execution.
+
+## What it does
+- Captures tasks quickly
+- Organizes work into Inbox, Today, Upcoming, Anytime, Someday, and Logbook
+- Supports Areas, Projects, notes, checklists, and natural language scheduling
+- Uses a minimal, productivity-first interface across mobile, tablet, desktop, and web
+
+## Current status
+- Active redesign in progress
+- Flutter app with web deployment support
+- Vercel build configured through this repository
 
 ## Stack
-- Flutter (Dart)
-
-## Status
-In active development.
-
-## Web Deploy
-
-The app can be deployed to Vercel as a Flutter web app.
-
-1. Connect the GitHub repo to Vercel.
-2. Keep the default framework detection.
-3. Use `vercel.json` from this repo for the build command and static output directory.
-4. Vercel will run `scripts/vercel-build.sh`, install Flutter, and publish `build/web`.
-
-Notes:
-- The web build uses the current web fallback storage, so it is suitable for demos and review.
-- If you want production-grade persistence on web, we should add a web sync backend next.
+- Flutter / Dart
+- SQLite for local storage
+- Vercel for web previews and deploys
