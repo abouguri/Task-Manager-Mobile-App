@@ -464,7 +464,7 @@ class TfFab extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: palette.accent.withOpacity(0.55),
+                color: palette.accent.withValues(alpha: 0.55),
                 blurRadius: 18,
                 spreadRadius: -4,
                 offset: const Offset(0, 6),

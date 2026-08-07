@@ -27,6 +27,11 @@ class Task {
   final DateTime? deadline;
   final String? projectId;
   final String? areaId;
+
+  /// Which of the project's headings this sits under. Null means it belongs to
+  /// the project but to no section, and renders above the first heading.
+  final String? heading;
+
   final String? recurrence;
   final bool isCompleted;
   final DateTime? completedAt;
@@ -43,6 +48,7 @@ class Task {
     this.deadline,
     this.projectId,
     this.areaId,
+    this.heading,
     this.recurrence,
     this.isCompleted = false,
     this.completedAt,
@@ -74,6 +80,7 @@ class Task {
         'deadline': deadline?.toIso8601String(),
         'projectId': projectId,
         'areaId': areaId,
+        'heading': heading,
         'recurrence': recurrence,
         'isCompleted': isCompleted ? 1 : 0,
         'completedAt': completedAt?.toIso8601String(),
@@ -97,6 +104,7 @@ class Task {
       projectId: map['projectId'] as String? ??
           _legacyProject(map['category'] as String?),
       areaId: map['areaId'] as String?,
+      heading: map['heading'] as String?,
       recurrence: map['recurrence'] as String?,
       isCompleted: map['isCompleted'] == 1 || map['isCompleted'] == true,
       completedAt: map['completedAt'] == null
@@ -120,6 +128,8 @@ class Task {
     bool clearDeadline = false,
     String? projectId,
     String? areaId,
+    String? heading,
+    bool clearHeading = false,
     String? recurrence,
     bool? isCompleted,
     DateTime? completedAt,
@@ -138,6 +148,7 @@ class Task {
         deadline: clearDeadline ? null : deadline ?? this.deadline,
         projectId: projectId ?? this.projectId,
         areaId: areaId ?? this.areaId,
+        heading: clearHeading ? null : heading ?? this.heading,
         recurrence: recurrence ?? this.recurrence,
         isCompleted: isCompleted ?? this.isCompleted,
         completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,

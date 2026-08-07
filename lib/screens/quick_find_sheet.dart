@@ -76,16 +76,16 @@ class _QuickFindSheetState extends State<QuickFindSheet> {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: palette.surface.withOpacity(0.96),
+                  color: palette.surface.withValues(alpha: 0.96),
                   borderRadius:
                       BorderRadius.circular(TaskFlowTokens.radiusLg),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 4,
                         offset: const Offset(0, 2)),
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.38),
+                        color: Colors.black.withValues(alpha: 0.38),
                         blurRadius: 48,
                         spreadRadius: -14,
                         offset: const Offset(0, 24)),

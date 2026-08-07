@@ -3,9 +3,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/task.dart';
 import '../models/organization.dart';
+import 'task_store.dart';
 
 /// Singleton class to manage SQLite database operations
-class DatabaseHelper {
+class DatabaseHelper implements TaskStore {
   // Singleton instance
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
@@ -24,7 +25,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'task_manager.db';
-  static const int _databaseVersion = 7;
+  static const int _databaseVersion = 8;
   static const String _tableName = 'tasks';
   static const String _areasTable = 'areas';
   static const String _projectsTable = 'projects';
@@ -72,6 +73,7 @@ class DatabaseHelper {
         deadline TEXT,
         projectId TEXT,
         areaId TEXT,
+        heading TEXT,
         recurrence TEXT,
         isCompleted INTEGER NOT NULL DEFAULT 0,
         completedAt TEXT,
@@ -83,7 +85,7 @@ class DatabaseHelper {
 
   Future<void> _createOrganizationTables(Database db) async {
     await db.execute('CREATE TABLE IF NOT EXISTS $_areasTable (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, accentColor INTEGER NOT NULL)');
-    await db.execute('CREATE TABLE IF NOT EXISTS $_projectsTable (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, areaId INTEGER, isCompleted INTEGER NOT NULL DEFAULT 0)');
+    await db.execute("CREATE TABLE IF NOT EXISTS $_projectsTable (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, areaId INTEGER, isCompleted INTEGER NOT NULL DEFAULT 0, headings TEXT NOT NULL DEFAULT '')");
   }
 
   /// Handle database upgrade
@@ -115,6 +117,15 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE $_tableName ADD COLUMN recurrence TEXT');
     }
     if (oldVersion < 7) await _createOrganizationTables(db);
+    if (oldVersion < 8) {
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN heading TEXT');
+      // A database older than v7 had its projects table created just above,
+      // already carrying the column; only a v7 table needs altering.
+      if (oldVersion >= 7) {
+        await db.execute(
+            "ALTER TABLE $_projectsTable ADD COLUMN headings TEXT NOT NULL DEFAULT ''");
+      }
+    }
   }
 
   Future<List<Area>> getAreas() async { if (kIsWeb) return List.of(_webAreas); final db = await database; return (await db.query(_areasTable, orderBy: 'title COLLATE NOCASE')).map(Area.fromMap).toList(); }

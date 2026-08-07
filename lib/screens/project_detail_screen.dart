@@ -20,13 +20,12 @@ class ProjectDetailScreen extends StatefulWidget {
 }
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
-  /// Headings live for the life of the screen; a task belongs to whichever
-  /// heading it was dragged onto, and to the first one otherwise.
-  static const String _defaultHeading = 'General';
-  final List<String> _headings = [_defaultHeading];
-  final Map<int, String> _headingByTask = {};
   final TextEditingController _headingController = TextEditingController();
   int? _openTaskId;
+
+  /// Tracks a drag so the "no heading" drop zone only appears when it is
+  /// actually usable, instead of sitting there as permanent clutter.
+  bool _dragging = false;
 
   @override
   void dispose() {
@@ -34,37 +33,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     super.dispose();
   }
 
-  void _addHeading() {
-    final value = _headingController.text.trim();
-    if (value.isEmpty || _headings.contains(value)) return;
-    setState(() {
-      _headings.add(value);
-      _headingController.clear();
-    });
-  }
-
-  void _addTask(String heading) {
-    showQuickCapture(
-      context,
-      initialWhen: TaskWhen.anytime,
-      projectId: widget.project.id?.toString(),
-      areaId: widget.project.areaId?.toString(),
-      onCreated: (task) {
-        final id = task.id;
-        if (id != null) setState(() => _headingByTask[id] = heading);
-      },
-    );
-  }
+  /// The stored project, not the snapshot this screen was pushed with — its
+  /// headings change while the screen is open.
+  Project _project(TaskProvider provider) =>
+      provider.projectById(widget.project.id) ?? widget.project;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final provider = context.watch<TaskProvider>();
-    final area = provider.areaById(widget.project.areaId);
+    final project = _project(provider);
+    final area = provider.areaById(project.areaId);
+
     final tasks = provider.allTasks
         .where((task) =>
-            int.tryParse(task.projectId ?? '') == widget.project.id &&
+            int.tryParse(task.projectId ?? '') == project.id &&
             !task.isCompleted)
+        .toList();
+
+    // A heading removed while tasks still pointed at it leaves them orphaned;
+    // treat those as unfiled rather than hiding them.
+    final known = project.headings.toSet();
+    final loose = tasks
+        .where((task) => task.heading == null || !known.contains(task.heading))
         .toList();
 
     return Scaffold(
@@ -83,13 +74,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       size: 19,
                       color: palette.textTertiary,
                       tooltip: 'Move project',
-                      onTap: _moveProject,
+                      onTap: () => _moveProject(project),
                     ),
                     const SizedBox(width: 8),
                     TfCircleButton(
                       icon: Icons.more_horiz_rounded,
                       tooltip: 'Project actions',
-                      onTap: _projectMenu,
+                      onTap: () => _projectMenu(project),
                     ),
                   ],
                 ),
@@ -102,18 +93,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         ? null
                         : () => setState(() => _openTaskId = null),
                     child: ListView(
-                      padding: EdgeInsets.fromLTRB(TaskFlowTokens.gutter - _bleed,
-                          14, TaskFlowTokens.gutter - _bleed, 100),
+                      padding: EdgeInsets.fromLTRB(
+                          TaskFlowTokens.gutter - _bleed,
+                          14,
+                          TaskFlowTokens.gutter - _bleed,
+                          100),
                       children: [
-                        _dim(_ProjectHeader(
-                            project: widget.project, area: area)),
-                        for (final heading in _headings)
-                          ..._section(provider, heading, tasks),
+                        _dim(_ProjectHeader(project: project, area: area)),
+                        const SizedBox(height: 6),
+                        ..._looseSection(provider, project, loose),
+                        for (final heading in project.headings)
+                          ..._section(provider, project, heading, tasks),
                         _dim(Padding(
                           padding: const EdgeInsets.only(top: 26),
                           child: _AddHeadingField(
                             controller: _headingController,
-                            onSubmit: _addHeading,
+                            onSubmit: () => _addHeading(project),
                           ),
                         )),
                       ],
@@ -126,7 +121,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               Positioned(
                 right: 24,
                 bottom: 30,
-                child: TfFab(onTap: () => _addTask(_headings.first)),
+                child: TfFab(onTap: () => _addTask(project, null)),
               ),
           ],
         ),
@@ -134,31 +129,42 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  List<Widget> _section(
-      TaskProvider provider, String heading, List<Task> allTasks) {
-    final isFirst = heading == _headings.first;
-    final tasks = allTasks.where((task) {
-      final assigned = _headingByTask[task.id];
-      return assigned == heading || (assigned == null && isFirst);
-    }).toList();
+  /// Tasks that belong to the project but sit above the first heading.
+  List<Widget> _looseSection(
+      TaskProvider provider, Project project, List<Task> loose) {
+    final showDropZone =
+        _dragging && project.headings.isNotEmpty && _openTaskId == null;
+
+    return [
+      if (showDropZone)
+        _dim(_DropZone(
+          label: 'No heading',
+          onAccept: (task) => _moveTaskToHeading(task, null),
+        )),
+      for (final task in loose) ..._row(provider, task),
+    ];
+  }
+
+  List<Widget> _section(TaskProvider provider, Project project, String heading,
+      List<Task> allTasks) {
+    final tasks =
+        allTasks.where((task) => task.heading == heading).toList();
 
     return [
       _dim(DragTarget<Task>(
-        onAcceptWithDetails: (details) {
-          final id = details.data.id;
-          if (id != null) setState(() => _headingByTask[id] = heading);
-        },
+        onAcceptWithDetails: (details) =>
+            _moveTaskToHeading(details.data, heading),
         builder: (context, candidate, __) => Container(
           decoration: BoxDecoration(
             color: candidate.isEmpty
                 ? Colors.transparent
-                : context.palette.accent.withOpacity(0.06),
+                : context.palette.accent.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(TaskFlowTokens.radiusChip),
           ),
           child: TfSectionHeader(
             title: heading,
-            onAdd: () => _addTask(heading),
-            onOverflow: () => _headingMenu(heading),
+            onAdd: () => _addTask(project, heading),
+            onOverflow: () => _headingMenu(project, heading),
           ),
         ),
       )),
@@ -201,6 +207,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     return [
       _dim(LongPressDraggable<Task>(
         data: task,
+        onDragStarted: () => setState(() => _dragging = true),
+        onDragEnd: (_) => setState(() => _dragging = false),
+        onDraggableCanceled: (_, __) => setState(() => _dragging = false),
         feedback: _DragChip(title: task.title),
         childWhenDragging: Opacity(opacity: 0.4, child: row),
         child: row,
@@ -223,29 +232,123 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           ),
         );
 
-  Future<void> _headingMenu(String heading) async {
-    if (heading == _headings.first) return;
-    final remove = await showModalBottomSheet<bool>(
+  // ---- Mutations ----------------------------------------------------------
+
+  Future<void> _moveTaskToHeading(Task task, String? heading) async {
+    setState(() => _dragging = false);
+    if (task.heading == heading) return;
+    await context.read<TaskProvider>().updateTask(
+        heading == null
+            ? task.copyWith(clearHeading: true)
+            : task.copyWith(heading: heading));
+  }
+
+  Future<void> _addHeading(Project project) async {
+    final value = _headingController.text.trim();
+    if (value.isEmpty || project.headings.contains(value)) return;
+    _headingController.clear();
+    await context
+        .read<TaskProvider>()
+        .updateProject(project.copyWith(headings: [...project.headings, value]));
+  }
+
+  void _addTask(Project project, String? heading) {
+    showQuickCapture(
+      context,
+      initialWhen: TaskWhen.anytime,
+      projectId: project.id?.toString(),
+      areaId: project.areaId?.toString(),
+      heading: heading,
+    );
+  }
+
+  Future<void> _headingMenu(Project project, String heading) async {
+    final provider = context.read<TaskProvider>();
+    final action = await showModalBottomSheet<String>(
       context: context,
       builder: (sheet) => SafeArea(
-        child: ListTile(
-          leading: const Icon(Icons.delete_outline_rounded),
-          title: Text('Remove "$heading"'),
-          subtitle: const Text('To-dos move back to the first heading.'),
-          onTap: () => Navigator.pop(sheet, true),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline_rounded),
+              title: const Text('Rename heading'),
+              onTap: () => Navigator.pop(sheet, 'rename'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded),
+              title: Text('Remove "$heading"'),
+              subtitle: const Text('Its to-dos move above the first heading.'),
+              onTap: () => Navigator.pop(sheet, 'remove'),
+            ),
+          ],
         ),
       ),
     );
-    if (remove != true) return;
-    setState(() {
-      _headings.remove(heading);
-      _headingByTask.removeWhere((_, value) => value == heading);
-    });
+    if (!mounted || action == null) return;
+
+    if (action == 'rename') {
+      await _renameHeading(provider, project, heading);
+      return;
+    }
+
+    final headings = [...project.headings]..remove(heading);
+    await provider.updateProject(project.copyWith(headings: headings));
+    for (final task in provider.allTasks.where((task) =>
+        task.heading == heading &&
+        int.tryParse(task.projectId ?? '') == project.id)) {
+      await provider.updateTask(task.copyWith(clearHeading: true));
+    }
   }
 
-  Future<void> _moveProject() async {
+  Future<void> _renameHeading(
+      TaskProvider provider, Project project, String heading) async {
+    final controller = TextEditingController(text: heading);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Rename heading'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (_) => Navigator.pop(dialog, true),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(dialog, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialog, true),
+              child: const Text('Rename')),
+        ],
+      ),
+    );
+    final value = controller.text.trim();
+    controller.dispose();
+    if (confirmed != true ||
+        value.isEmpty ||
+        value == heading ||
+        project.headings.contains(value)) {
+      return;
+    }
+
+    await provider.updateProject(project.copyWith(
+      headings: [
+        for (final item in project.headings) item == heading ? value : item,
+      ],
+    ));
+    // Tasks reference a heading by name, so they have to follow the rename.
+    for (final task in provider.allTasks.where((task) =>
+        task.heading == heading &&
+        int.tryParse(task.projectId ?? '') == project.id)) {
+      await provider.updateTask(task.copyWith(heading: value));
+    }
+  }
+
+  Future<void> _moveProject(Project project) async {
     final provider = context.read<TaskProvider>();
-    final areaId = await showModalBottomSheet<int?>(
+    final areaId = await showModalBottomSheet<int>(
       context: context,
       builder: (sheet) => SafeArea(
         child: ListView(
@@ -271,11 +374,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
     if (areaId == null) return;
-    await provider.updateProject(
-        widget.project.copyWith(areaId: areaId == -1 ? null : areaId));
+    await provider
+        .updateProject(project.copyWith(areaId: areaId == -1 ? null : areaId));
   }
 
-  Future<void> _projectMenu() async {
+  Future<void> _projectMenu(Project project) async {
     final provider = context.read<TaskProvider>();
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -285,7 +388,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.check_circle_outline_rounded),
-              title: Text(widget.project.isCompleted
+              title: Text(project.isCompleted
                   ? 'Reopen project'
                   : 'Complete project'),
               onTap: () => Navigator.pop(sheet, 'complete'),
@@ -295,8 +398,37 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
     if (action != 'complete') return;
-    await provider.toggleProject(widget.project);
+    await provider.toggleProject(project);
     if (mounted) Navigator.pop(context);
+  }
+}
+
+/// Appears mid-drag so a to-do can be pulled back out of a heading.
+class _DropZone extends StatelessWidget {
+  const _DropZone({required this.label, required this.onAccept});
+
+  final String label;
+  final ValueChanged<Task> onAccept;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return DragTarget<Task>(
+      onAcceptWithDetails: (details) => onAccept(details.data),
+      builder: (context, candidate, __) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: candidate.isEmpty
+              ? palette.groupedFill
+              : palette.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusChip),
+        ),
+        child: Text(label,
+            style: TaskFlowText.meta(
+                candidate.isEmpty ? palette.textQuaternary : palette.accent)),
+      ),
+    );
   }
 }
 
@@ -316,7 +448,7 @@ class _ProjectHeader extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: palette.accent.withOpacity(0.16),
+            color: palette.accent.withValues(alpha: 0.16),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.folder_rounded, size: 19, color: palette.accent),
@@ -371,6 +503,7 @@ class _AddHeadingField extends StatelessWidget {
               controller: controller,
               onSubmitted: (_) => onSubmit(),
               textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.sentences,
               style: TextStyle(
                   color: palette.textPrimary, fontSize: 15, height: 1.2),
               decoration: InputDecoration(
@@ -386,8 +519,7 @@ class _AddHeadingField extends StatelessWidget {
               ),
             ),
           ),
-          TfGlyphButton(
-              icon: Icons.add_rounded, size: 17, onTap: onSubmit),
+          TfGlyphButton(icon: Icons.add_rounded, size: 17, onTap: onSubmit),
         ],
       ),
     );
@@ -412,7 +544,7 @@ class _DragChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 18,
                 offset: const Offset(0, 8)),
           ],
