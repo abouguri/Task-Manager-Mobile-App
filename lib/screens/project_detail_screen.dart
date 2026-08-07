@@ -158,7 +158,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           decoration: BoxDecoration(
             color: candidate.isEmpty
                 ? Colors.transparent
-                : context.palette.accent.withOpacity(0.06),
+                : context.palette.accent.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(TaskFlowTokens.radiusChip),
           ),
           child: TfSectionHeader(
@@ -421,7 +421,7 @@ class _DropZone extends StatelessWidget {
         decoration: BoxDecoration(
           color: candidate.isEmpty
               ? palette.groupedFill
-              : palette.accent.withOpacity(0.12),
+              : palette.accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(TaskFlowTokens.radiusChip),
         ),
         child: Text(label,
@@ -448,7 +448,7 @@ class _ProjectHeader extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: palette.accent.withOpacity(0.16),
+            color: palette.accent.withValues(alpha: 0.16),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.folder_rounded, size: 19, color: palette.accent),
@@ -544,7 +544,7 @@ class _DragChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 18,
                 offset: const Offset(0, 8)),
           ],

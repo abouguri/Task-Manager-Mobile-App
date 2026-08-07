@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
         elevation: 0,
         color: palette.surface,
         surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.black.withOpacity(0.04),
+        shadowColor: Colors.black.withValues(alpha: 0.04),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
           side: BorderSide(color: palette.separator, width: 1),

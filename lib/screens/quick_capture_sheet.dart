@@ -118,11 +118,11 @@ class _QuickCaptureSheetState extends State<QuickCaptureSheet> {
               borderRadius: BorderRadius.circular(TaskFlowTokens.radiusLg),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 4,
                     offset: const Offset(0, 2)),
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 48,
                     spreadRadius: -14,
                     offset: const Offset(0, 24)),

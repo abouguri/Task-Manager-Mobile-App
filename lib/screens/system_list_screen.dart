@@ -780,7 +780,7 @@ class _SelectionToolbar extends StatelessWidget {
                   BorderRadius.circular(TaskFlowTokens.radiusToolbar),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 30,
                     spreadRadius: -8,
                     offset: const Offset(0, 12)),
