@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../design/taskflow_tokens.dart';
 import '../models/organization.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
-import 'add_edit_task_screen.dart';
+import '../widgets/tf_widgets.dart';
 import 'organization_screen.dart';
+import 'project_detail_screen.dart';
 import 'quick_capture_sheet.dart';
+import 'quick_find_sheet.dart';
 import 'system_list_screen.dart';
 
 class HomeOverviewScreen extends StatefulWidget {
@@ -18,80 +21,52 @@ class HomeOverviewScreen extends StatefulWidget {
 }
 
 class _HomeOverviewScreenState extends State<HomeOverviewScreen> {
-  final TextEditingController _search = TextEditingController();
   final Set<int> _expandedAreas = <int>{};
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
 
   void _capture() => _captureTo(TaskWhen.inbox);
 
   void _captureTo(TaskWhen when) {
-    showModalBottomSheet<void>(
+    showQuickCapture(context, initialWhen: when);
+  }
+
+  void _openQuickFind() => showQuickFind(context);
+
+  /// The design gives Home no chrome beyond search and the action button, so
+  /// area/project management hangs off a long press rather than a toolbar.
+  Future<void> _organize() async {
+    final wantsProjects = await showModalBottomSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => QuickCaptureSheet(initialWhen: when),
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.layers_outlined),
+              title: const Text('Areas'),
+              onTap: () => Navigator.pop(sheet, false),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_outlined),
+              title: const Text('Projects'),
+              onTap: () => Navigator.pop(sheet, true),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (wantsProjects == null || !mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => OrganizationScreen(projects: wantsProjects)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final provider = context.watch<TaskProvider>();
-
-    final lists = [
-      _SystemListRowData(
-        kind: SystemListKind.inbox,
-        title: 'Inbox',
-        icon: Icons.inbox_outlined,
-        color: const Color(0xFF5A7DFF),
-        totalCount: provider.allTasks.where((task) => task.when == TaskWhen.inbox && !task.isCompleted).length,
-        urgentCount: provider.allTasks.where((task) => !task.isCompleted && (task.when == TaskWhen.date || task.deadline != null)).length,
-      ),
-      _SystemListRowData(
-        kind: SystemListKind.today,
-        title: 'Today',
-        icon: Icons.star_rounded,
-        color: const Color(0xFFEE8A3A),
-        totalCount: provider.allTasks.where((task) => !task.isCompleted && (task.when == TaskWhen.today || task.when == TaskWhen.evening)).length,
-        urgentCount: provider.allTasks.where((task) => !task.isCompleted && (task.when == TaskWhen.today || task.when == TaskWhen.evening || task.deadline != null)).length,
-      ),
-      _SystemListRowData(
-        kind: SystemListKind.upcoming,
-        title: 'Upcoming',
-        icon: Icons.calendar_month_outlined,
-        color: const Color(0xFF47A57A),
-        totalCount: provider.allTasks.where((task) => !task.isCompleted && (task.when == TaskWhen.date || task.scheduledFor != null)).length,
-        urgentCount: provider.allTasks.where((task) => !task.isCompleted && task.deadline != null).length,
-      ),
-      _SystemListRowData(
-        kind: SystemListKind.anytime,
-        title: 'Anytime',
-        icon: Icons.check_circle_outline,
-        color: const Color(0xFF8B8F97),
-        totalCount: provider.allTasks.where((task) => task.when == TaskWhen.anytime && !task.isCompleted).length,
-        urgentCount: 0,
-      ),
-      _SystemListRowData(
-        kind: SystemListKind.someday,
-        title: 'Someday',
-        icon: Icons.lightbulb_outline,
-        color: const Color(0xFF8C6D44),
-        totalCount: provider.allTasks.where((task) => task.when == TaskWhen.someday && !task.isCompleted).length,
-        urgentCount: 0,
-      ),
-      _SystemListRowData(
-        kind: SystemListKind.logbook,
-        title: 'Logbook',
-        icon: Icons.history_rounded,
-        color: const Color(0xFF6F7582),
-        totalCount: provider.allTasks.where((task) => task.isCompleted).length,
-        urgentCount: 0,
-      ),
-    ];
+    final lists = _systemLists(provider);
 
     return CallbackShortcuts(
       bindings: {
@@ -101,92 +76,169 @@ class _HomeOverviewScreenState extends State<HomeOverviewScreen> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
+          backgroundColor: palette.surface,
           body: SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 88),
+            child: Stack(
               children: [
-                _TopSearchBar(controller: _search, onChanged: provider.searchTasks),
-                const SizedBox(height: 18),
-                for (final item in lists) ...[
-                  _SystemListRow(
-                    data: item,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => SystemListScreen(kind: item.kind)),
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                      child: _QuickFindPill(onTap: _openQuickFind),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                const Divider(height: 24),
-                _AreasHeader(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OrganizationScreen(projects: false)),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
+                        children: [
+                          for (final item in lists)
+                            _SystemListRow(
+                              data: item,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        SystemListScreen(kind: item.kind)),
+                              ),
+                            ),
+                          Container(
+                            height: 1,
+                            color: palette.separator,
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 18),
+                          ),
+                          for (final area in provider.areas)
+                            _AreaBlock(
+                              area: area,
+                              expanded: _expandedAreas.contains(area.id),
+                              onToggle: () => _toggleArea(area),
+                              onLongPress: _organize,
+                              projects: provider.projects
+                                  .where((project) =>
+                                      project.areaId == area.id &&
+                                      !project.isCompleted)
+                                  .toList(),
+                            ),
+                          if (provider.areas.isEmpty)
+                            _EmptyAreasHint(onTap: _organize),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  right: 24,
+                  bottom: 30,
+                  child: GestureDetector(
+                    onLongPress: _organize,
+                    child: TfFab(onTap: _capture),
                   ),
                 ),
-                const SizedBox(height: 10),
-                for (final area in provider.areas) ...[
-                  _AreaBlock(
-                    area: area,
-                    expanded: _expandedAreas.contains(area.id),
-                    onToggle: () => setState(() {
-                      if (_expandedAreas.contains(area.id)) {
-                        _expandedAreas.remove(area.id);
-                      } else {
-                        _expandedAreas.add(area.id!);
-                      }
-                    }),
-                    children: _expandedAreas.contains(area.id) ? _buildAreaChildren(context, provider, area) : const [],
-                  ),
-                  const SizedBox(height: 10),
-                ],
               ],
             ),
           ),
-          floatingActionButton: _QuickAddFab(onCapture: _capture, onCaptureTo: _captureTo),
         ),
       ),
     );
   }
 
-  List<Widget> _buildAreaChildren(BuildContext context, TaskProvider provider, Area area) {
-    final areaId = area.id;
-    final widgets = <Widget>[];
+  void _toggleArea(Area area) {
+    final id = area.id;
+    if (id == null) return;
+    setState(() {
+      if (!_expandedAreas.remove(id)) _expandedAreas.add(id);
+    });
+  }
 
-    for (final project in provider.projects.where((project) => project.areaId == areaId)) {
-      widgets.add(_ProjectRow(project: project, area: area));
-    }
+  List<_SystemListRowData> _systemLists(TaskProvider provider) {
+    final open = provider.allTasks.where((task) => !task.isCompleted);
+    final endOfToday = _endOfToday();
 
-    for (final task in provider.allTasks.where((task) => !task.isCompleted && int.tryParse(task.areaId ?? '') == areaId && task.projectId == null)) {
-      widgets.add(_StandaloneTaskRow(task: task));
-    }
+    final todayCount = open
+        .where((task) =>
+            task.when == TaskWhen.today || task.when == TaskWhen.evening)
+        .length;
+    final dueCount = open
+        .where((task) =>
+            task.deadline != null && !task.deadline!.isAfter(endOfToday))
+        .length;
 
-    return widgets;
+    // Following the design, only Inbox and Today carry counts — the rest stay
+    // quiet so the column reads as navigation, not a dashboard.
+    return [
+      _SystemListRowData(
+        kind: SystemListKind.inbox,
+        title: 'Inbox',
+        icon: Icons.inbox_rounded,
+        color: TaskFlowTokens.inboxAccent,
+        count: open.where((task) => task.when == TaskWhen.inbox).length,
+      ),
+      _SystemListRowData(
+        kind: SystemListKind.today,
+        title: 'Today',
+        icon: Icons.star_rounded,
+        color: TaskFlowTokens.todayAccent,
+        count: todayCount,
+        urgentCount: dueCount,
+      ),
+      const _SystemListRowData(
+        kind: SystemListKind.upcoming,
+        title: 'Upcoming',
+        icon: Icons.calendar_today_rounded,
+        color: TaskFlowTokens.upcomingAccent,
+      ),
+      const _SystemListRowData(
+        kind: SystemListKind.anytime,
+        title: 'Anytime',
+        icon: Icons.layers_rounded,
+        color: TaskFlowTokens.anytimeAccent,
+      ),
+      const _SystemListRowData(
+        kind: SystemListKind.someday,
+        title: 'Someday',
+        icon: Icons.archive_rounded,
+        color: TaskFlowTokens.somedayAccent,
+      ),
+      const _SystemListRowData(
+        kind: SystemListKind.logbook,
+        title: 'Logbook',
+        icon: Icons.check_rounded,
+        color: TaskFlowTokens.logbookAccent,
+      ),
+    ];
+  }
+
+  static DateTime _endOfToday() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, 23, 59, 59);
   }
 }
 
-class _TopSearchBar extends StatelessWidget {
-  const _TopSearchBar({required this.controller, required this.onChanged});
+class _QuickFindPill extends StatelessWidget {
+  const _QuickFindPill({required this.onTap});
 
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        hintText: 'Quick Find',
-        prefixIcon: const Icon(Icons.search),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(999),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.4),
+    final palette = context.palette;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: palette.fill,
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.search_rounded, size: 17, color: palette.textTertiary),
+            const SizedBox(width: 8),
+            Text('Quick Find',
+                style: TextStyle(
+                    color: palette.textTertiary, fontSize: 16, height: 1)),
+          ],
         ),
       ),
     );
@@ -199,15 +251,15 @@ class _SystemListRowData {
     required this.title,
     required this.icon,
     required this.color,
-    required this.totalCount,
-    required this.urgentCount,
+    this.count = 0,
+    this.urgentCount = 0,
   });
 
   final SystemListKind kind;
   final String title;
   final IconData icon;
   final Color color;
-  final int totalCount;
+  final int count;
   final int urgentCount;
 }
 
@@ -219,26 +271,28 @@ class _SystemListRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final palette = context.palette;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 9),
         child: Row(
           children: [
-            _RoundedSquareIcon(color: data.color, icon: data.icon),
-            const SizedBox(width: 12),
+            TfSystemIcon(icon: data.icon, color: data.color),
+            const SizedBox(width: 13),
             Expanded(
-              child: Text(
-                data.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
+              child: Text(data.title,
+                  style: TaskFlowText.listTitle(palette.textPrimary)),
             ),
-            _CountBadge(value: data.totalCount.toString(), urgent: false),
             if (data.urgentCount > 0) ...[
-              const SizedBox(width: 8),
-              _CountBadge(value: data.urgentCount.toString(), urgent: true),
+              _UrgentBadge(value: data.urgentCount),
+              const SizedBox(width: 9),
             ],
+            if (data.count > 0)
+              Text('${data.count}',
+                  style: TextStyle(
+                      color: palette.textTertiary, fontSize: 16, height: 1)),
           ],
         ),
       ),
@@ -246,105 +300,74 @@ class _SystemListRow extends StatelessWidget {
   }
 }
 
-class _RoundedSquareIcon extends StatelessWidget {
-  const _RoundedSquareIcon({required this.color, required this.icon});
+class _UrgentBadge extends StatelessWidget {
+  const _UrgentBadge({required this.value});
 
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(color: color.withOpacity(0.14), borderRadius: BorderRadius.circular(10)),
-      child: Icon(icon, size: 18, color: color),
-    );
-  }
-}
-
-class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.value, required this.urgent});
-
-  final String value;
-  final bool urgent;
+  final int value;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      constraints: const BoxConstraints(minWidth: 21),
+      height: 21,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: urgent ? const Color(0xFFD84B4B).withOpacity(0.14) : Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
+        color: context.palette.danger,
+        borderRadius: BorderRadius.circular(11),
       ),
-      child: Text(
-        value,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: urgent ? const Color(0xFFD84B4B) : Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
-  }
-}
-
-class _AreasHeader extends StatelessWidget {
-  const _AreasHeader({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Row(
-          children: [
-            const Icon(Icons.folder_zip_outlined, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text('Areas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-            ),
-            Icon(Icons.expand_more_rounded, color: Theme.of(context).colorScheme.outline),
-          ],
-        ),
-      ),
+      child: Text('$value',
+          style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1,
+              fontWeight: FontWeight.w600)),
     );
   }
 }
 
 class _AreaBlock extends StatelessWidget {
-  const _AreaBlock({required this.area, required this.expanded, required this.onToggle, required this.children});
+  const _AreaBlock({
+    required this.area,
+    required this.expanded,
+    required this.onToggle,
+    required this.onLongPress,
+    required this.projects,
+  });
 
   final Area area;
   final bool expanded;
   final VoidCallback onToggle;
-  final List<Widget> children;
+  final VoidCallback onLongPress;
+  final List<Project> projects;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        InkWell(
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onToggle,
-          borderRadius: BorderRadius.circular(16),
+          onLongPress: onLongPress,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+            padding: const EdgeInsets.fromLTRB(4, 11, 4, 7),
             child: Row(
               children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(color: Color(area.accentColor), shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 10),
+                Icon(Icons.layers_outlined,
+                    size: 18, color: palette.textTertiary),
+                const SizedBox(width: 13),
                 Expanded(
-                  child: Text(area.title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  child: Text(area.title,
+                      style: TaskFlowText.areaTitle(palette.textPrimary)),
                 ),
-                Icon(expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.outline),
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 160),
+                  child: Icon(Icons.keyboard_arrow_down_rounded,
+                      size: 18, color: palette.controlBorder),
+                ),
               ],
             ),
           ),
@@ -352,12 +375,22 @@ class _AreaBlock extends StatelessWidget {
         AnimatedSize(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
           child: expanded
-              ? Padding(
-                  padding: const EdgeInsets.only(left: 20, top: 4, bottom: 8),
-                  child: Column(children: children),
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final project in projects)
+                      _ProjectRow(project: project),
+                    if (projects.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(6, 2, 4, 8),
+                        child: Text('No projects yet.',
+                            style: TaskFlowText.meta(palette.textQuaternary)),
+                      ),
+                  ],
                 )
-              : const SizedBox.shrink(),
+              : const SizedBox(width: double.infinity),
         ),
       ],
     );
@@ -365,147 +398,64 @@ class _AreaBlock extends StatelessWidget {
 }
 
 class _ProjectRow extends StatelessWidget {
-  const _ProjectRow({required this.project, required this.area});
+  const _ProjectRow({required this.project});
 
   final Project project;
-  final Area area;
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<TaskProvider>();
-    final total = provider.allTasks.where((task) => int.tryParse(task.projectId ?? '') == project.id && !task.isCompleted).length;
-    final completed = provider.allTasks.where((task) => int.tryParse(task.projectId ?? '') == project.id && task.isCompleted).length;
-    final progress = total + completed == 0 ? 0.0 : completed / (total + completed);
+    final palette = context.palette;
+    final provider = context.watch<TaskProvider>();
+    final tasks = provider.allTasks
+        .where((task) => int.tryParse(task.projectId ?? '') == project.id);
+    final total = tasks.length;
+    final done = tasks.where((task) => task.isCompleted).length;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          _ProjectRingIcon(progress: progress, color: Color(area.accentColor)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(project.title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-          ),
-          if (total > 0) _CountBadge(value: '$total', urgent: false),
-        ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ProjectDetailScreen(project: project)),
       ),
-    );
-  }
-}
-
-class _StandaloneTaskRow extends StatelessWidget {
-  const _StandaloneTaskRow({required this.task});
-
-  final Task task;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Theme.of(context).dividerColor, width: 1.4),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(6, 8, 4, 8),
+        child: Row(
+          children: [
+            TfProjectRing(progress: total == 0 ? 0 : done / total),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Text(project.title,
+                  style: TaskFlowText.projectTitle(palette.textPrimary)),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: Text(task.title, style: Theme.of(context).textTheme.bodyMedium)),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ProjectRingIcon extends StatelessWidget {
-  const _ProjectRingIcon({required this.progress, required this.color});
+class _EmptyAreasHint extends StatelessWidget {
+  const _EmptyAreasHint({required this.onTap});
 
-  final double progress;
-  final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 22,
-      height: 22,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: progress.clamp(0.0, 1.0),
-            strokeWidth: 2.2,
-            backgroundColor: color.withOpacity(0.16),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: progress >= 1 ? color : Colors.transparent, shape: BoxShape.circle),
-          ),
-        ],
+    final palette = context.palette;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+        child: Row(
+          children: [
+            Icon(Icons.add_rounded, size: 17, color: palette.accent),
+            const SizedBox(width: 12),
+            Text('New Area',
+                style: TaskFlowText.projectTitle(palette.accent)),
+          ],
+        ),
       ),
-    );
-  }
-}
-
-class _QuickAddFab extends StatelessWidget {
-  const _QuickAddFab({required this.onCapture, required this.onCaptureTo});
-
-  final VoidCallback onCapture;
-  final ValueChanged<TaskWhen> onCaptureTo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: Theme.of(context).colorScheme.surface,
-          shape: const CircleBorder(),
-          elevation: 2,
-          child: PopupMenuButton<SystemListKind>(
-            padding: EdgeInsets.zero,
-            tooltip: 'Quick capture target',
-            icon: const Icon(Icons.expand_less_rounded),
-            onSelected: (kind) {
-              switch (kind) {
-                case SystemListKind.today:
-                  onCaptureTo(TaskWhen.today);
-                  break;
-                case SystemListKind.upcoming:
-                  onCaptureTo(TaskWhen.date);
-                  break;
-                case SystemListKind.anytime:
-                  onCaptureTo(TaskWhen.anytime);
-                  break;
-                case SystemListKind.someday:
-                  onCaptureTo(TaskWhen.someday);
-                  break;
-                case SystemListKind.inbox:
-                case SystemListKind.logbook:
-                  onCapture();
-                  break;
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: SystemListKind.inbox, child: Text('Inbox')),
-              PopupMenuItem(value: SystemListKind.today, child: Text('Today')),
-              PopupMenuItem(value: SystemListKind.upcoming, child: Text('Upcoming')),
-              PopupMenuItem(value: SystemListKind.anytime, child: Text('Anytime')),
-              PopupMenuItem(value: SystemListKind.someday, child: Text('Someday')),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        FloatingActionButton(
-          onPressed: onCapture,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add),
-        ),
-      ],
     );
   }
 }

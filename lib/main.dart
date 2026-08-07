@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => TaskProvider()),
+        ChangeNotifierProvider(create: (context) => TaskProvider()..loadTasks()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(
@@ -50,11 +50,11 @@ class MyApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: _buildTheme(Brightness.light),
             darkTheme: _buildTheme(Brightness.dark),
-        
-        
+
+
         // Home screen
         home: const HomeScreen(),
-        
+
         // Named routes
         routes: {
           '/home': (context) => const HomeScreen(),
@@ -67,102 +67,106 @@ class MyApp extends StatelessWidget {
 
   ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final background = isDark ? const Color(0xFF131311) : TaskFlowTokens.background;
-    final surface = isDark ? const Color(0xFF1B1B1A) : TaskFlowTokens.surface;
-    final surfaceMuted = isDark ? const Color(0xFF232320) : TaskFlowTokens.surfaceMuted;
-    final primary = isDark ? const Color(0xFF88A89D) : TaskFlowTokens.primary;
-    final textPrimary = isDark ? const Color(0xFFF3F1EB) : TaskFlowTokens.textPrimary;
-    final textSecondary = isDark ? const Color(0xFFB7B2A8) : TaskFlowTokens.textSecondary;
-    final border = isDark ? Colors.white.withOpacity(0.08) : TaskFlowTokens.border;
+    final palette =
+        isDark ? TaskFlowPalette.dark : TaskFlowPalette.light;
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
+      extensions: <ThemeExtension<dynamic>>[palette],
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
+        seedColor: palette.accent,
         brightness: brightness,
-        primary: primary,
-        secondary: isDark ? const Color(0xFFB8A37B) : const Color(0xFF8D6E63),
-        surface: surface,
-        background: background,
-        error: const Color(0xFFD46A5C),
+        primary: palette.accent,
+        secondary: TaskFlowTokens.eveningAccent,
+        surface: palette.surface,
+        error: palette.danger,
       ),
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: palette.surface,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
       textTheme: Typography.blackCupertino.copyWith(
-        displayLarge: TextStyle(color: textPrimary, fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -1.0),
-        displayMedium: TextStyle(color: textPrimary, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.8),
-        headlineMedium: TextStyle(color: textPrimary, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-        titleLarge: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2),
-        titleMedium: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(color: textPrimary, fontSize: 16, height: 1.45),
-        bodyMedium: TextStyle(color: textSecondary, fontSize: 14, height: 1.45),
-        labelLarge: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
-        labelMedium: TextStyle(color: textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
+        displayLarge: TaskFlowText.largeTitle(palette.textPrimary),
+        displayMedium: TaskFlowText.largeTitle(palette.textPrimary),
+        displaySmall: TaskFlowText.title1(palette.textPrimary),
+        headlineMedium: TaskFlowText.title1(palette.textPrimary),
+        titleLarge: TaskFlowText.navTitle(palette.textPrimary),
+        titleMedium: TaskFlowText.listTitle(palette.textPrimary),
+        bodyLarge: TaskFlowText.taskTitle(palette.textPrimary),
+        bodyMedium: TaskFlowText.meta(palette.textTertiary),
+        bodySmall: TaskFlowText.meta(palette.textQuaternary),
+        labelLarge: TaskFlowText.sectionHeader(palette.textPrimary),
+        labelMedium: TaskFlowText.badge(palette.textTertiary),
+        labelSmall: TaskFlowText.badge(palette.textTertiary),
       ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
-        backgroundColor: background,
-        foregroundColor: textPrimary,
+        scrolledUnderElevation: 0,
+        backgroundColor: palette.surface,
+        foregroundColor: palette.textPrimary,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
-          color: textPrimary,
-          fontSize: 28,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.8,
-        ),
+        titleTextStyle: TaskFlowText.title1(palette.textPrimary),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: surface,
+        color: palette.surface,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black.withOpacity(0.04),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusLg),
-          side: BorderSide(color: border, width: 1),
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+          side: BorderSide(color: palette.separator, width: 1),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 0,
-        backgroundColor: primary,
+        backgroundColor: palette.accent,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
-        ),
+        shape: const CircleBorder(),
       ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
-          borderSide: BorderSide(color: border),
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
-          borderSide: BorderSide(color: border),
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
-          borderSide: BorderSide(color: primary, width: 1.8),
+          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+          borderSide: BorderSide(color: palette.accent, width: 1.5),
         ),
         filled: true,
-        fillColor: surfaceMuted,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        fillColor: palette.fill,
+        hintStyle: TaskFlowText.taskTitle(palette.textTertiary),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: primary,
+          backgroundColor: palette.accent,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+            borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: TaskFlowText.button(Colors.white),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: palette.accent,
+          foregroundColor: Colors.white,
+          shape: const StadiumBorder(),
+          textStyle: TaskFlowText.button(Colors.white),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primary,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          foregroundColor: palette.accent,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
           ),
@@ -170,35 +174,38 @@ class MyApp extends StatelessWidget {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          side: BorderSide(color: border),
+          foregroundColor: palette.accent,
+          side: BorderSide(color: palette.separator),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusMd),
+            borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
           ),
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: surfaceMuted,
-        side: BorderSide(color: border),
+        backgroundColor: palette.groupedFill,
+        side: BorderSide.none,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaskFlowTokens.radiusSm),
+          borderRadius: BorderRadius.circular(8),
         ),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        labelStyle: TaskFlowText.tag(palette.textSecondary),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
       ),
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius:
+              BorderRadius.circular(TaskFlowTokens.radiusCheckbox),
         ),
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primary;
+            return palette.accent;
           }
           return Colors.transparent;
         }),
-        side: BorderSide(color: border, width: 1.6),
+        side: BorderSide(color: palette.controlBorder, width: 1.5),
       ),
-      dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
+      dividerTheme:
+          DividerThemeData(color: palette.separator, thickness: 1, space: 1),
     );
   }
 }
