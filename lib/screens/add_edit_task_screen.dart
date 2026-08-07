@@ -35,6 +35,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   DateTime? _deadline;
   int? _areaId;
   int? _projectId;
+  String? _heading;
 
   bool get _isNew => widget.task == null;
 
@@ -52,6 +53,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     _deadline = task.deadline;
     _areaId = int.tryParse(task.areaId ?? '');
     _projectId = int.tryParse(task.projectId ?? '');
+    _heading = task.heading;
   }
 
   @override
@@ -148,6 +150,13 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         provider.projectById(_projectId)?.title ?? 'No project',
                     onTap: () => _pickProject(provider),
                   ),
+                  if ((provider.projectById(_projectId)?.headings ?? const [])
+                      .isNotEmpty)
+                    _ValueRow(
+                      icon: Icons.segment_rounded,
+                      label: _heading ?? 'No heading',
+                      onTap: () => _pickHeading(provider),
+                    ),
                   if (!_isNew)
                     Padding(
                       padding: const EdgeInsets.only(top: 32),
@@ -438,7 +447,36 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     setState(() {
       _projectId = picked == -1 ? null : picked;
       _areaId = provider.projectById(_projectId)?.areaId ?? _areaId;
+      final headings = provider.projectById(_projectId)?.headings ?? const [];
+      if (!headings.contains(_heading)) _heading = null;
     });
+  }
+
+  Future<void> _pickHeading(TaskProvider provider) async {
+    final headings = provider.projectById(_projectId)?.headings ?? const [];
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheet) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: const Text('No heading'),
+              onTap: () => Navigator.pop(sheet, ''),
+            ),
+            for (final heading in headings)
+              ListTile(
+                leading: const Icon(Icons.segment_rounded),
+                title: Text(heading),
+                selected: heading == _heading,
+                onTap: () => Navigator.pop(sheet, heading),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null) return;
+    setState(() => _heading = picked.isEmpty ? null : picked);
   }
 
   Future<void> _delete() async {
@@ -499,6 +537,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       deadline: _deadline,
       projectId: _projectId?.toString(),
       areaId: _areaId?.toString(),
+      heading: _heading,
       recurrence: recurrence,
       isCompleted: widget.task?.isCompleted ?? false,
       completedAt: widget.task?.completedAt,

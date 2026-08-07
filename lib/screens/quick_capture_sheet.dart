@@ -16,6 +16,7 @@ Future<void> showQuickCapture(
   TaskWhen initialWhen = TaskWhen.inbox,
   String? projectId,
   String? areaId,
+  String? heading,
   ValueChanged<Task>? onCreated,
 }) {
   return showGeneralDialog<void>(
@@ -32,6 +33,7 @@ Future<void> showQuickCapture(
         initialWhen: initialWhen,
         projectId: projectId,
         areaId: areaId,
+        heading: heading,
         onCreated: onCreated,
       ),
     ),
@@ -56,12 +58,14 @@ class QuickCaptureSheet extends StatefulWidget {
     this.initialWhen = TaskWhen.inbox,
     this.projectId,
     this.areaId,
+    this.heading,
     this.onCreated,
   });
 
   final TaskWhen initialWhen;
   final String? projectId;
   final String? areaId;
+  final String? heading;
   final ValueChanged<Task>? onCreated;
 
   @override
@@ -469,6 +473,7 @@ class _QuickCaptureSheetState extends State<QuickCaptureSheet> {
       deadline: _deadline,
       projectId: widget.projectId,
       areaId: widget.areaId,
+      heading: widget.heading,
       recurrence: usesParsedWhen ? parsed.recurrence : null,
     );
 
