@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'design/taskflow_tokens.dart';
 import 'providers/task_provider.dart';
+import 'services/demo_seed.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -39,7 +40,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => TaskProvider()..loadTasks()),
+        ChangeNotifierProvider(create: (context) {
+          final tasks = TaskProvider();
+          // The public demo build fills itself in; every other build starts
+          // empty, exactly as a real first run does.
+          tasks.loadTasks().then((_) {
+            if (kSeedDemoData) seedDemoData(tasks);
+          });
+          return tasks;
+        }),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(
