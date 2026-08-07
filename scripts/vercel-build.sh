@@ -40,4 +40,7 @@ flutter --version
 
 cd "$PROJECT_DIR"
 flutter pub get
-flutter build web --release --base-href /
+# The public demo has no persistent storage, so it would otherwise open to an
+# empty app. DEMO_SEED fills it with sample content on load. Set here and
+# nowhere else: local builds and every real install start empty.
+flutter build web --release --base-href / --dart-define=DEMO_SEED=true
