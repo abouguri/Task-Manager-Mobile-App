@@ -112,6 +112,31 @@ class TfChecklistMark extends StatelessWidget {
   }
 }
 
+/// A screen's large title, preceded by its accent glyph.
+class TfScreenTitle extends StatelessWidget {
+  const TfScreenTitle({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 25, color: color),
+        const SizedBox(width: 9),
+        Text(title, style: TaskFlowText.largeTitle(context.palette.textPrimary)),
+      ],
+    );
+  }
+}
+
 /// A blue section header sitting over a hairline — the redesign's replacement
 /// for card-per-section grouping.
 class TfSectionHeader extends StatelessWidget {

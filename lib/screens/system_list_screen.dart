@@ -161,7 +161,7 @@ class _SystemListScreenState extends State<SystemListScreen> {
     if (_isToday) return _buildToday(provider, tasks);
 
     return [
-      _dim(_ScreenTitle(
+      _dim(TfScreenTitle(
           title: _titleForKind(widget.kind),
           icon: _iconForKind(widget.kind),
           color: _accentForKind(widget.kind))),
@@ -178,7 +178,7 @@ class _SystemListScreenState extends State<SystemListScreen> {
         tasks.where((task) => task.when == TaskWhen.evening).toList();
 
     return [
-      _dim(_ScreenTitle(
+      _dim(TfScreenTitle(
           title: 'Today',
           icon: Icons.star_rounded,
           color: TaskFlowTokens.todayAccent)),
@@ -591,29 +591,6 @@ class _SystemListScreenState extends State<SystemListScreen> {
       case SystemListKind.logbook:
         return 'Logbook';
     }
-  }
-}
-
-class _ScreenTitle extends StatelessWidget {
-  const _ScreenTitle({
-    required this.title,
-    required this.icon,
-    required this.color,
-  });
-
-  final String title;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 25, color: color),
-        const SizedBox(width: 9),
-        Text(title, style: TaskFlowText.largeTitle(context.palette.textPrimary)),
-      ],
-    );
   }
 }
 
