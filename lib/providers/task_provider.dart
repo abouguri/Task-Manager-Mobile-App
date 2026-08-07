@@ -46,16 +46,26 @@ class TaskProvider with ChangeNotifier {
       _tasks = await _dbHelper.getAllTasks();
       _areas = await _dbHelper.getAreas();
       _projects = await _dbHelper.getProjects();
+    } catch (error) {
+      // Platforms with no SQLite plugin (desktop) open empty rather than
+      // taking the app down before the first frame.
+      debugPrint('TaskFlow: could not load stored tasks — $error');
+      _tasks = [];
+      _areas = [];
+      _projects = [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> addTask(Task task) async {
+  /// Returns the stored task, so callers can act on the assigned id.
+  Future<Task> addTask(Task task) async {
     final id = await _dbHelper.insertTask(task);
-    _tasks.add(task.copyWith(id: id));
+    final stored = task.copyWith(id: id);
+    _tasks.add(stored);
     notifyListeners();
+    return stored;
   }
 
   Future<void> updateTask(Task task) async {
@@ -117,6 +127,7 @@ class TaskProvider with ChangeNotifier {
   Future<void> addArea(Area area) async { final id = await _dbHelper.insertArea(area); _areas.add(area.copyWith(id: id)); _areas.sort((a, b) => a.title.compareTo(b.title)); notifyListeners(); }
   Future<void> updateArea(Area area) async { await _dbHelper.updateArea(area); final index = _areas.indexWhere((item) => item.id == area.id); if (index >= 0) _areas[index] = area; notifyListeners(); }
   Future<void> addProject(Project project) async { final id = await _dbHelper.insertProject(project); _projects.add(project.copyWith(id: id)); _projects.sort((a, b) => a.title.compareTo(b.title)); notifyListeners(); }
+  Future<void> updateProject(Project project) async { await _dbHelper.updateProject(project); final index = _projects.indexWhere((item) => item.id == project.id); if (index >= 0) _projects[index] = project; notifyListeners(); }
   Future<void> toggleProject(Project project) async { final updated = project.copyWith(isCompleted: !project.isCompleted); await _dbHelper.updateProject(updated); final index = _projects.indexWhere((item) => item.id == project.id); if (index >= 0) _projects[index] = updated; notifyListeners(); }
 
   Area? areaById(int? id) {
