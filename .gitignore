@@ -65,3 +65,6 @@ Description.txt
 .tools/
 ios/Flutter/ephemeral/
 TaskFlow_Things3_Redesign_Plan.md
+
+# Swift toolchain installer, downloaded not vendored
+swiftly-*.tar.gz
