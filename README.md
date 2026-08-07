@@ -61,9 +61,8 @@ The interface follows the system light/dark setting.
 
 ## Status
 
-The list-first redesign is implemented across every screen, ported from a
-[Claude Design](https://claude.ai/design) document. The palette is iOS system
-blue.
+The list-first redesign is implemented across every screen. The palette is iOS
+system blue.
 
 `flutter analyze` is clean and `flutter test` runs 40 tests covering
 serialisation, the provider, and the scheduling parser.
