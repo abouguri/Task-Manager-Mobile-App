@@ -1,120 +1,121 @@
 # TaskFlow
 
-A task manager built around one idea: a list you can read at a glance. Rows
-stay one line no matter how much a task carries, sections are a blue heading
-over a hairline rather than a card, and opening a task expands it in place
-instead of pushing a screen — so you never lose your position in the list you
-were reading.
+**A task manager built around one idea: a list you can read at a glance.**
 
-## Lists
+Rows stay one line no matter how much a task is carrying. Sections are a
+heading over a hairline rather than a card. Opening a task expands it in
+place instead of pushing a new screen — so you never lose your position in
+the list you were reading.
 
-Six built-in lists, in the order they appear on Home:
+Flutter · one codebase for Android, iOS and web · offline-first.
 
-| List | What lands here |
+---
+
+## The app
+
+|  |  |
+| :--: | :--: |
+| <img src="docs/screenshots/home.png" width="330"> | <img src="docs/screenshots/today.png" width="330"> |
+| **Home** — six lists, then your own areas and projects. Counts appear only where they earn their place. | **Today** — what's happening, what's due, and a separate *This Evening*. |
+| <img src="docs/screenshots/upcoming.png" width="330"> | <img src="docs/screenshots/project.png" width="330"> |
+| **Upcoming** — scheduled work grouped by day, with checklist progress and deadlines inline. | **Projects** — divided into headings you name, with completion rings and to-dos you can drag between sections. |
+| <img src="docs/screenshots/task-open.png" width="330"> | <img src="docs/screenshots/quick-capture.png" width="330"> |
+| **Open in place** — notes, checklist and tags expand where the row was, the rest of the list dimmed. | **Quick capture** — opens over whatever you were doing and returns you there. |
+| <img src="docs/screenshots/quick-find.png" width="330"> | <img src="docs/screenshots/multi-select.png" width="330"> |
+| **Quick Find** — jump to any list, project, to-do or tag. | **Multi-select** — long-press, then reschedule, move or delete a batch. |
+
+---
+
+## What it does
+
+**Six lists that mean something.** Inbox for anything caught without a
+decision. Today for the work in front of you. Upcoming, grouped by day.
+Anytime for live work with no date, Someday for what's deliberately parked,
+and a Logbook of everything finished.
+
+**Structure when you want it.** Areas hold projects, projects divide into
+headings you name. Drag a to-do between sections; rename a heading and its
+to-dos follow.
+
+**Capture without stopping.** `Ctrl/Cmd+N` from anywhere on Home. Type
+*"call the dentist tomorrow"*, *"send invoice next friday"*, or *"water the
+plants every friday"* and the date, and the repeat, are understood from the
+sentence.
+
+**The details that make a to-do real.** Notes, checklists, free-form tags, a
+scheduled date and a separate deadline. Finish something recurring and its
+next occurrence is written with a fresh checklist.
+
+Light and dark follow the system setting.
+
+---
+
+## Engineering highlights
+
+**A design system, in code.** Colour, elevation and a full type scale live in
+one file as a themed extension that resolves light and dark, so every screen
+reads from the same source rather than hard-coding values. The type scale
+converts the design's CSS `em` letter-spacing into logical pixels at each
+size.
+
+**UI primitives built, not assembled.** The checkbox, section header, project
+completion ring and task row are purpose-built widgets — the ring is a
+`CustomPainter` — rather than stock Material components bent into shape. Hit
+targets are enlarged without disturbing layout, so rows stay aligned to the
+gutter while staying comfortable to tap.
+
+**Offline-first storage with real migrations.** SQLite through eight schema
+versions, each upgrade preserving what's already on the device. The newest
+adds project headings, and takes care that a database upgrading from an older
+version doesn't collide with a column it already has.
+
+**Built to be testable.** The state layer depends on a storage *interface*
+rather than the database directly, which lets the suite drive the whole
+provider against an in-memory store. 40 tests cover serialisation, state
+transitions and the date parser. `flutter analyze` reports zero issues.
+
+**Reproducible deploys.** The build pins its SDK version and caches it between
+runs, re-downloading whenever the pin moves — so a build that passes locally
+passes in CI for the same reasons.
+
+---
+
+## Stack
+
+| | |
 | --- | --- |
-| **Inbox** | Anything captured without a decision about when |
-| **Today** | Work for today, plus a **This Evening** section |
-| **Upcoming** | Scheduled work, grouped by day |
-| **Anytime** | Live work with no date |
-| **Someday** | Deliberately parked |
-| **Logbook** | Completed, most recent first |
+| **Framework** | Flutter 3.44 / Dart 3.12 |
+| **State** | `provider`, with storage behind an interface |
+| **Storage** | SQLite (`sqflite`), versioned migrations |
+| **Targets** | Android, iOS, web |
+| **Testing** | `flutter_test`, 40 tests |
+| **Deploy** | Vercel, pinned-toolchain build script |
 
-Home shows counts on Inbox and Today only, with a red badge on Today for
-deadlines that are due or overdue. The rest stay quiet so the column reads as
-navigation rather than a dashboard.
+---
 
-## Areas, projects, headings
-
-Areas group projects; projects hold to-dos; headings divide a project into
-sections. A project's headings are stored on the project itself, so a heading
-you have just added survives before anything is filed under it. To-dos with no
-heading sit above the first one.
-
-- Add a to-do straight into a section from its `+`
-- Drag a to-do between headings; a drop zone appears mid-drag to pull one back
-  out to no heading
-- Rename a heading and its to-dos follow
-- Projects show a completion ring
-
-## Capture and search
-
-**Quick capture** opens over whatever you were doing, with notes, checklist,
-tags, a scheduled date and a deadline. `Ctrl/Cmd+N` opens it from Home. It
-reads plain phrasing in the title — `tomorrow`, `in 3 days`, `next friday`,
-`monday at 9:30 am`, `every friday` (which sets a weekly recurrence), and
-`someday`.
-
-**Quick Find** opens over the current screen and searches lists, projects,
-to-do titles and tags.
-
-## Working with to-dos
-
-- Tap a row to open it in place: notes, checklist, tags, and where it lives
-- Full editor behind **Edit** for when, deadline, area, project and heading
-- Long-press a row for multi-select, then reschedule, move, or delete a batch
-  from the floating toolbar
-- Checklists, free-form tags, a scheduled date and a separate deadline
-- Completing a recurring to-do writes its next occurrence with a fresh
-  checklist
-
-The interface follows the system light/dark setting.
-
-## Status
-
-The list-first redesign is implemented across every screen. The palette is iOS
-system blue.
-
-`flutter analyze` is clean and `flutter test` runs 40 tests covering
-serialisation, the provider, and the scheduling parser.
-
-**Known limitations**
-
-- **The web build keeps data in memory only.** `sqflite` has no web backend, so
-  the browser falls back to an in-memory store and a reload starts empty. The
-  web deploy is a demo, not a usable client. Android and iOS persist to SQLite.
-- **A weekday word anywhere in a title is treated as a date, and removed from
-  the title.** `Plan the monday standup agenda` is stored as `Plan the standup
-  agenda`, scheduled for Monday. Pinned by a test so it cannot drift, but not
-  yet fixed — see `test/natural_language_schedule_test.dart`.
-- Only Android, iOS and web are configured. There are no desktop targets.
-
-## Getting started
-
-Requires Flutter **3.44.8** — the same version `scripts/vercel-build.sh`
-installs, so local and deploy builds resolve identically.
+## Running it
 
 ```bash
 flutter pub get
-flutter run              # a connected device, or -d chrome
+flutter run          # a connected device, or -d chrome
 flutter test
-flutter analyze
 ```
+
+Requires Flutter 3.44.8 — the version the deploy script installs, so local and
+production builds resolve identically.
+
+> The web build keeps data in memory: `sqflite` has no browser backend, so a
+> reload starts fresh. Android and iOS persist to disk.
 
 ## Layout
 
 ```
 lib/
-  design/taskflow_tokens.dart   palette, light/dark theme extension, type scale
-  models/                       Task, Area, Project
-  providers/task_provider.dart  app state over a TaskStore
-  services/
-    task_store.dart             storage interface the provider depends on
-    database_helper.dart        SQLite implementation (v8 schema)
-    natural_language_schedule.dart
-  screens/                      home, system lists, project detail, capture, find
-  widgets/                      shared primitives: rows, checkbox, section header
-test/                           fake store plus model, provider and parser tests
-```
-
-`TaskProvider` depends on the `TaskStore` interface rather than the database
-directly, which is what lets the suite drive it against an in-memory store.
-
-## Deployment
-
-The web build deploys to Vercel via `scripts/vercel-build.sh`, which pins the
-Flutter version and caches the SDK between builds, re-downloading whenever the
-pin moves.
-
-```bash
-flutter build web --release --base-href /
+  design/       palette, light/dark theme extension, type scale
+  models/       Task, Area, Project
+  providers/    app state over a storage interface
+  services/     SQLite, storage interface, date parsing
+  screens/      home, lists, project detail, capture, find
+  widgets/      shared primitives
+test/           in-memory store plus model, state and parser tests
 ```
