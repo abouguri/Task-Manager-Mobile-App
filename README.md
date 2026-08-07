@@ -9,6 +9,11 @@ the list you were reading.
 
 Flutter · one codebase for Android, iOS and web · offline-first.
 
+**[Try it in the browser →](https://task-flow-ai-blush.vercel.app/)**
+The web build starts empty and keeps everything in memory, so add a few
+to-dos to have a look around — a reload clears them. Android and iOS
+persist to disk.
+
 ---
 
 ## The app
@@ -103,9 +108,6 @@ flutter test
 
 Requires Flutter 3.44.8 — the version the deploy script installs, so local and
 production builds resolve identically.
-
-> The web build keeps data in memory: `sqflite` has no browser backend, so a
-> reload starts fresh. Android and iOS persist to disk.
 
 ## Layout
 
