@@ -3,9 +3,12 @@ import '../models/task.dart';
 import '../models/organization.dart';
 import '../services/database_helper.dart';
 import '../services/natural_language_schedule.dart';
+import '../services/task_store.dart';
 
 class TaskProvider with ChangeNotifier {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  TaskProvider({TaskStore? store}) : _dbHelper = store ?? DatabaseHelper();
+
+  final TaskStore _dbHelper;
   List<Task> _tasks = [];
   List<Area> _areas = [];
   List<Project> _projects = [];

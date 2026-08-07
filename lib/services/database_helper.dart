@@ -3,9 +3,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/task.dart';
 import '../models/organization.dart';
+import 'task_store.dart';
 
 /// Singleton class to manage SQLite database operations
-class DatabaseHelper {
+class DatabaseHelper implements TaskStore {
   // Singleton instance
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
